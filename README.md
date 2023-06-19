@@ -1,5 +1,7 @@
-# yerb-v1
+# YERBA
 
-Only designed for one server right now but basic scaling can be added with a few lines of code – just want to ensure ownership of a space or it's dispatcher don't conflict between nodes.
+A work in progress playground for interactions between models and data.
 
-export const authStore = persistKey('auth-21', {
+<!--  -->
+
+![image](./.readme/temp-header.png)
