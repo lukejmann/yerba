@@ -1,0 +1,106 @@
+datasource db {
+    provider = "sqlite"
+    url      = "file:dev.db"
+}
+
+generator client {
+    provider   = "cargo prisma"
+    output     = "../../crates/prisma/src/prisma.rs"
+    space_path = "crate::prisma"
+}
+
+model JWT {
+    id        Int      @id @default(autoincrement())
+    token     String   @unique
+    date_used DateTime @default(now())
+
+    user_id Bytes
+    user    User  @relation(fields: [user_id], references: [id])
+
+    @@map("user_token")
+}
+
+model User {
+    id               Bytes     @id
+    account_attached Boolean   @default(false)
+    jwts             JWT[]
+    Account          Account[]
+    Space            Space[]
+}
+
+model Account {
+    id        Bytes    @id
+    name      String
+    email     String
+    password  String
+    date_used DateTime @default(now())
+
+    user_id Bytes
+    user    User  @relation(fields: [user_id], references: [id])
+
+    @@map("account")
+}
+
+model Meta {
+    id          Bytes   @id
+    name        String
+    description String
+    color       String?
+    Space       Space[]
+
+    @@map("meta")
+}
+
+model Space {
+    // id     Int   @id @default(autoincrement())
+    id Bytes @id
+
+    meta_id Bytes @unique
+    meta    Meta  @relation(fields: [meta_id], references: [id])
+
+    owner_id Bytes
+    owner    User  @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    files File[]
+    tasks Task[]
+
+    @@map("space")
+}
+
+model File {
+    id Bytes @id
+
+    path String
+
+    name      String
+    extension String
+
+    status Int @default(0) // 0 = uploading, 1 = uploaded, 2 = learning, 3 = learned, 4 = failed
+
+    size Int @default(0)
+
+    date_created  DateTime @default(now())
+    date_modified DateTime @default(now())
+    date_indexed  DateTime @default(now())
+    space_id      Bytes
+    space         Space    @relation(fields: [space_id], references: [id])
+    tasks         Task[]
+
+    @@unique([id, path, name, extension])
+    @@map("file")
+}
+
+model Task {
+    id   Bytes  @id
+    hash String
+
+    status    Int    @default(0) // 0 = in-progress, 1 = success, 2 = failed
+    task_type String
+
+    space_id Bytes
+    Space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    file_id  Bytes?
+    File     File?  @relation(fields: [file_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    @@map("job")
+}

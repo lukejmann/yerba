@@ -1,0 +1,12 @@
+{
+	"extends": "./config/ts/base.tsconfig.json",
+	"compilerOptions": {
+		"declarationDir": "dist",
+		"paths": {
+			"~/*": ["./src/*"]
+		},
+		"types": ["vite-plugin-svgr/client", "vite/client"],
+		"baseUrl": "."
+	},
+	"include": ["./**/*", "src/styled.d.ts"]
+}

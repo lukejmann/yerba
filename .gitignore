@@ -1,0 +1,15 @@
+node_modules
+dist
+.eslintcache
+.turbo
+.DS_Store
+cache
+.env
+mock/*
+
+
+target
+.env
+mock/
+
+crates/prisma/src/prisma.rs

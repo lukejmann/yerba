@@ -1,0 +1,34 @@
+{
+	"private": true,
+	"scripts": {
+		"gen": "pnpm gen:prisma && pnpm codegen",
+		"gen:prisma": "cd server && cargo prisma generate",
+		"build": "turbo run build",
+		"codegen": "cargo test -p server api::tests::test_and_export_rspc_bindings -- --exact",
+		"app": "pnpm --filter app -- ",
+		"server": "pnpm --filter server -- ",
+		"prisma": "cd server && cargo prisma",
+		"dev": "turbo run dev --filter app --filter server"
+	},
+	"devDependencies": {
+		"@babel/plugin-syntax-import-assertions": "^7.20.0",
+		"@trivago/prettier-plugin-sort-imports": "^4.1.1",
+		"prettier": "^2.8.7",
+		"turbo": "^1.9.9",
+		"turbo-ignore": "^0.3.0",
+		"typescript": "^4.9.4",
+		"vite": "^4.3.8"
+	},
+	"overrides": {
+		"@types/node": "^18.0.0"
+	},
+	"engines": {
+		"pnpm": ">=8.0.0",
+		"npm": "pnpm",
+		"yarn": "pnpm",
+		"node": ">=18.0.0"
+	},
+	"eslintConfig": {
+		"root": true
+	}
+}

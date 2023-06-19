@@ -1,0 +1,9 @@
+{
+	"name": "server",
+	"version": "0.0.0",
+	"main": "index.js",
+	"license": "GPL-3.0-only",
+	"scripts": {
+		"dev": "RUST_BACKTRACE=1 SPACES_DIR=\"/Users/two/yerb-v1/mock/spaces\" DB_ADDR=\"file:///Users/two/yerb-v1/mock/dbs/130.db\"  cargo watch -x 'run -p server'"
+	}
+}

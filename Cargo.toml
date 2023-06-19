@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "server"]
+
+[workspace.package]
+license = "MIT"
+edition = "2021"
+repository = "https://github.com/lukejmann/yerba-cp"
+
+[workspace.dependencies]
+prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", rev = "7e67b4550dd5323d479c96008678032f396b9060", features = [
+	"rspc",
+	"sqlite-create-many",
+	"migrations",
+	"sqlite",
+] }
+prisma-client-rust-cli = { git = "https://github.com/Brendonovich/prisma-client-rust", rev = "7e67b4550dd5323d479c96008678032f396b9060", features = [
+	"rspc",
+	"sqlite-create-many",
+	"migrations",
+	"sqlite",
+] }
+prisma-client-rust-sdk = { git = "https://github.com/Brendonovich/prisma-client-rust", rev = "7e67b4550dd5323d479c96008678032f396b9060", features = [
+	"sqlite",
+] }
+
+rspc = { version = "0.1.4" }
+specta = { version = "1.0.4" }
+httpz = { version = "0.0.3" }
+tokio = { version = "1.28.2" }
+
+[patch.crates-io]
+# rspc = { path = "../lukem-rspc" }
+rspc = { git = "https://github.com/lukejmann/rspc", rev = "c9ad93d9c0decb643958d6079a8aa679207e7f6d" }
+httpz = { git = "https://github.com/oscartbeaumont/httpz", rev = "a5185f2ed2fdefeb2f582dce38a692a1bf76d1d6" }
+specta = { git = "https://github.com/oscartbeaumont/specta", branch = "v2" }
