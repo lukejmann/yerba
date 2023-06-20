@@ -21,9 +21,14 @@ I've found that too much of the time I'm spending around LLMs involves copying e
 
 **Space**: A directory owned by a user. Contains user uploaded files alongside hidden files for executing tasks.
 
-**Task**: Operations performed on files in a space.
+**Task**: Operations that can be performed on a space. Tasks are executed by the node that owns the space. Can be dispatched by users or other tasks.
 
 ## Architecture
+
+  <img  src="./.readme/overview-diagram.png">
+  <img  src="./.readme/node-context-diagram.png">
+
+## Implementation
 
   <img  src="./.readme/overview-diagram.png">
   <img  src="./.readme/node-context-diagram.png">
