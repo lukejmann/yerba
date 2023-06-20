@@ -28,11 +28,6 @@ I've found that too much of the time I'm spending around LLMs involves copying e
   <img  src="./.readme/overview-diagram.png">
   <img  src="./.readme/node-context-diagram.png">
 
-## Implementation
-
-  <img  src="./.readme/overview-diagram.png">
-  <img  src="./.readme/node-context-diagram.png">
-
 ## Progress
 
 - [x] Spaces management
