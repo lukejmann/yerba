@@ -12,6 +12,9 @@ use tracing::info;
 
 mod utils;
 
+static APP_DIR: include_dir::Dir<'static> =
+    include_dir::include_dir!("$CARGO_MANIFEST_DIR/../app/dist");
+
 #[tokio::main]
 async fn main() {
     let spaces_dir = get_spaces_dir().await;
@@ -31,6 +34,31 @@ async fn main() {
     let signal = utils::axum_shutdown_signal(node.clone());
 
     let app = axum::Router::new()
+        .route(
+            "/",
+            get(|| async move {
+                use axum::{
+                    body::{self, Full},
+                    response::Response,
+                };
+                use http::{header, HeaderValue, StatusCode};
+
+                match APP_DIR.get_file("index.html") {
+                    Some(file) => Response::builder()
+                        .status(StatusCode::OK)
+                        .header(
+                            header::CONTENT_TYPE,
+                            HeaderValue::from_str("text/html").unwrap(),
+                        )
+                        .body(body::boxed(Full::from(file.contents())))
+                        .unwrap(),
+                    None => Response::builder()
+                        .status(StatusCode::NOT_FOUND)
+                        .body(body::boxed(axum::body::Empty::new()))
+                        .unwrap(),
+                }
+            }),
+        )
         .route("/upload", {
             let node = node.clone();
             post(|mut files: Multipart| async move {
