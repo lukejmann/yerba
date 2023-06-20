@@ -1,4 +1,4 @@
-  <img  src="./.readme/cover.png">
+  <img  src="./.readme/cover2.png">
   <h1 align="center">Yerba</h1>
 
 <p align="center">
