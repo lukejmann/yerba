@@ -16,6 +16,7 @@ use anyhow::{Context, Result};
 use self::dispatcher::Dispatcher;
 
 pub mod dispatcher;
+pub mod learn_file;
 pub mod upload_file;
 
 pub trait TaskInfo: Serialize + DeserializeOwned + Send + Sync + Hash {

@@ -59,6 +59,8 @@ export const Viewer = memo(
 				  )}`
 				: null;
 
+		console.log('serverOrigin in preview', serverOrigin);
+
 		const href = !src || src === '#' ? null : src;
 
 		const link = useMemo(() => {

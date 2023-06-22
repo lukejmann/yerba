@@ -26,11 +26,3 @@ impl Debug for User {
             .finish()
     }
 }
-
-impl User {
-    pub(crate) fn emit(&self, event: CoreEvent) {
-        if let Err(e) = self.node_context.event_bus_tx.send(event) {
-            warn!("Error sending event to event bus: {e:?}");
-        }
-    }
-}

@@ -3,9 +3,10 @@ import styled, { css, keyframes } from 'styled-components/macro';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { proxyMap, subscribeKey } from 'valtio/utils';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
-import { FileWrapped, Task, useSpaceQuery, useSpaceSubscription } from '~/rspc';
+import { FileWrapped, Task, useSpaceMutation, useSpaceQuery, useSpaceSubscription } from '~/rspc';
 import { ItemSubtitle, ItemTitle, RowBetween, RowFlat, SectionHeader, opacify } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
+import SectionButton from '~/ui/buttons';
 import { useUploader } from './useUploader';
 
 const FileWrapper = styled.div<{ selected?: boolean }>`
@@ -25,6 +26,9 @@ const FileWrapper = styled.div<{ selected?: boolean }>`
 		selected ? theme.backdropFilterBase : theme.backdrop1Nonde};
 	transition: all 0.1s ease;
 	z-index: 1;
+	&:hover {
+		cursor: default;
+	}
 `;
 
 export const filesStore = proxy({
@@ -178,10 +182,10 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 			);
 			// console;
 			const learningTasksRunning = activeTasks.filter(
-				(task) => task.task_type === 'file_learn' && task.status === 0
+				(task) => task.task_type === 'learn_file' && task.status === 0
 			);
 			const learningTasksCompleted = activeTasks.filter(
-				(task) => task.task_type === 'learn_file_learnfile' && task.status === 1
+				(task) => task.task_type === 'learn_file' && task.status === 1
 			);
 			setStatus(() => {
 				if (learningTasksCompleted.length > 0) return FileStatus.Learned;
@@ -192,6 +196,8 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 			});
 		});
 	}, [status]);
+
+	const learnFile = useSpaceMutation('tasks.learnFile');
 
 	return (
 		<FileWrapper
@@ -205,7 +211,20 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 				<ItemTitle>{file.name}</ItemTitle>
 				<ItemSubtitle>{file.file_with_tasks.extension.replace('.', '').toUpperCase()}</ItemSubtitle>
 			</RowFlat>
-			<FileStatusIndicatorRow status={status} />
+			<div></div>
+			<RowBetween>
+				{status === FileStatus.Uploaded && isDev && (
+					<SectionButton
+						onClick={() => {
+							learnFile.mutate({ file_id: file.id.toString() });
+							console.log('learnFile', file.id.toString());
+						}}
+					>
+						Learn
+					</SectionButton>
+				)}
+				<FileStatusIndicatorRow status={status} />
+			</RowBetween>
 		</FileWrapper>
 	);
 };

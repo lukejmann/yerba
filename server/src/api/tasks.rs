@@ -1,14 +1,17 @@
 use crate::{
     api::CoreEvent,
-    tasks::{upload_file::FileUploadTaskInfo, IntoTask},
+    tasks::{
+        learn_file::{LearnFileTask, LearnFileTaskInfo},
+        upload_file::FileUploadTaskInfo,
+        IntoTask,
+    },
     utils::u2b,
 };
 pub use anyhow::{Context, Result};
 
-use custom_prisma::prisma::{task};
+use custom_prisma::prisma::task;
 use rspc::alpha::AlphaRouter;
-use tracing::{debug};
-
+use tracing::debug;
 
 use super::{utils::space, Ctx, R};
 
@@ -51,5 +54,17 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                     }
                 }
             })
+        })
+        .procedure("learnFile", {
+            R.with2(space())
+                .mutation(|(_, space), args: LearnFileTaskInfo| async move {
+                    debug!("Beginning learning");
+                    let learn_taskId = space
+                        .clone()
+                        .dispatcher
+                        .dispatch(&space, args.clone().runnable())
+                        .await?;
+                    Ok(())
+                })
         })
 }

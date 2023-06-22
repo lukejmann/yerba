@@ -12,6 +12,7 @@ export type Procedures = {
         { key: "spaces.create", input: UserArgs<CreateSpaceArgs>, result: SpaceWrapped } | 
         { key: "spaces.delete", input: UserArgs<DeleteSpaceArgs>, result: null } | 
         { key: "spaces.edit", input: SpaceArgs<EditSpaceArgs>, result: Meta } | 
+        { key: "tasks.learnFile", input: SpaceArgs<LearnFileTaskInfo>, result: null } | 
         { key: "tasks.uploadFile", input: SpaceArgs<FileUploadTaskInfo>, result: null } | 
         { key: "users.create", input: never, result: UserWithToken },
     subscriptions: 
@@ -32,6 +33,8 @@ export type FileWithTasks = { id: number[]; path: string; name: string; extensio
 export type FileWrapped = { id: string; name: string; file_with_tasks: FileWithTasks }
 
 export type InvalidateOperationEvent = { key: string; arg: any; result: any | null }
+
+export type LearnFileTaskInfo = { file_id: string }
 
 export type Meta = { id: number[]; name: string; description: string; color: string | null }
 

@@ -84,6 +84,10 @@ impl Dispatcher {
                         Err(_) => 1,
                     };
 
+                    if let Err(e) = result {
+                        error!("Task {} failed: {:?}", task_id, e);
+                    }
+
                     let finish_result = task.finish(&space, dispatcher, task_status).await;
                     if let Err(e) = finish_result {
                         error!("Failed to finish task: {:?}", e);
