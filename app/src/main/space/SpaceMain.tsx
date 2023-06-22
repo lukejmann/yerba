@@ -24,14 +24,14 @@ const SpaceContainer = styled.div`
 	width: 100%;
 	height: 100%;
 
-	background: rgba(255, 255, 255, 0.01);
+	background: rgba(255, 255, 255, 0);
 
 	border: 1px solid #e6e6e6;
 
 	box-shadow: -39px 30px 90px rgba(0, 0, 0, 0.1);
 	// backdrop-filter: blur(1px);
 
-	border-radius: 7px;
+	border-radius: 8px;
 
 	flex: none;
 	order: 2;

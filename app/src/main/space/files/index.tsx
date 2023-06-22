@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import styled, { css, keyframes } from 'styled-components/macro';
+import styled, { css, keyframes, useTheme } from 'styled-components/macro';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { proxyMap, subscribeKey } from 'valtio/utils';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
@@ -125,9 +125,11 @@ export default () => {
 		e.preventDefault();
 		e.stopPropagation();
 	};
+	const theme = useTheme();
 
 	return (
 		<FloatingBarWithContent
+			border={theme?.border1Light}
 			// @ts-ignore
 			onDrop={handleDrop}
 			onDropCapture={handleDrop}
@@ -140,7 +142,7 @@ export default () => {
 			scrollContent={files?.map((file) => (
 				<FileRow file={file} />
 			))}
-			barContent={
+			topBarContent={
 				<RowBetween padding={'md'}>
 					<SectionHeader>Files</SectionHeader>
 				</RowBetween>

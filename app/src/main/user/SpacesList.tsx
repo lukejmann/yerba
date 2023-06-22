@@ -56,7 +56,7 @@ export default () => {
 					<ItemSubtitle style={{ width: 'fit-content' }}>{lib.meta.description}</ItemSubtitle>
 				</SpaceWrapper>
 			))}
-			barContent={
+			topBarContent={
 				<RowBetween padding={'md'}>
 					<SectionHeader>Spaces</SectionHeader>
 					<SectionButton

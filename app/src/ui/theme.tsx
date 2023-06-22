@@ -72,6 +72,7 @@ export function getTheme() {
 			backdrop1Base: 'blur(7px)',
 			backdrop1None: 'blur(0px)',
 			border1Base: '1px solid #E6E6E6',
+			border1Light: '1px solid #e6e6e65d',
 			border1None: '0px solid #E6E6E6',
 			border2Base: '2px solid #E6E6E6',
 			border2None: '2px solid #E6E6E6',

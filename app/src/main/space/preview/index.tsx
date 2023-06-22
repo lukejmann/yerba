@@ -22,7 +22,7 @@ export default () => {
 					key={selectedFile?.id ?? '1'}
 				/>
 			]}
-			barContent={
+			topBarContent={
 				<RowFixed
 					style={{
 						gap: '8.22px'

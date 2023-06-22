@@ -3,7 +3,7 @@ import React, { PropsWithChildren, ReactNode } from 'react';
 import useMeasure from 'react-use-measure';
 import styled, { useTheme } from 'styled-components/macro';
 
-const FloatingBarContainer = styled(animated.div)`
+const FloatingBarContainer = styled(animated.div)<{ align: 'top' | 'bottom' }>`
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -15,23 +15,27 @@ const FloatingBarContainer = styled(animated.div)`
 	// height: fit-content;
 	left: 6px;
 	right: 6px;
-	top: 6px;
+	${({ align }) => `${align}: 6px;`}
+	// background: ${({ align }) => (align === 'top' ? 'yellow' : 'orange')};
 
-	z-index: 100;
+	z-index: ${({ align }) => (align === 'top' ? '101' : '100')};
 
 	padding: 8px 8px 8px 8px;
 
 	border-radius: 8px;
+
+	// max-height: 100px;
 `;
 
 interface FloatingBarProps {
-	barContent?: ReactNode;
+	content?: ReactNode;
+	align: 'top' | 'bottom';
 	float: boolean;
 	ref?: any;
 }
 
 export const FloatingBar = React.forwardRef<HTMLDivElement, FloatingBarProps>(function FloatingBar(
-	{ barContent, float },
+	{ content, float, align },
 	ref
 ) {
 	const styles = useSpring({
@@ -46,8 +50,8 @@ export const FloatingBar = React.forwardRef<HTMLDivElement, FloatingBarProps>(fu
 	});
 
 	return (
-		<FloatingBarContainer ref={ref} style={styles}>
-			{barContent}
+		<FloatingBarContainer ref={ref} style={styles} align={align}>
+			{content}
 		</FloatingBarContainer>
 	);
 });
@@ -65,7 +69,7 @@ const FloatingBarScrollContainer = styled(animated.div)`
 
 const FloatingBarScrollContent = styled(animated.div)`
 	position: absolute;
-	height: 100%;
+	// height: 100%;
 	top: 0;
 	left: 0;
 	right: 0;
@@ -89,30 +93,38 @@ const FloatingBarScrollContent = styled(animated.div)`
 `;
 
 interface FloatingBarWithContentProps {
-	barContent?: ReactNode;
+	topBarContent?: ReactNode;
+	bottomBarContent?: ReactNode;
 	scrollContent?: ReactNode[];
-	extraContent?: ReactNode[];
 	scrollRef?: any;
 	panelRef?: any;
+	border?: string;
 }
 
 export default function FloatingBarWithContent({
-	barContent,
+	topBarContent,
+	bottomBarContent,
 	scrollContent,
-	extraContent,
 	scrollRef,
 	panelRef,
+	border,
 	...props
 }: PropsWithChildren<FloatingBarWithContentProps>) {
 	const scrollContainerRefDefault = React.useRef<HTMLDivElement>(null);
 	const scrollContainerRef = scrollRef || scrollContainerRefDefault;
-	const [floatRef, { height }] = useMeasure();
+	const [topFloatRef, { height: topHeight }] = useMeasure();
+	const [bottomFloatRef, { height: bottomHeight }] = useMeasure();
+	console.log('bottomHeight', bottomHeight);
 	const [topItemRef, topItemInView] = useInView({
 		root: scrollContainerRef,
 		rootMargin: '-10px 0px 10px 0px'
 	});
+	const [bottomItemRef, bottomItemInView] = useInView({
+		root: scrollContainerRef,
+		rootMargin: '10px 0px -10px 0px'
+	});
 
-	const styles = useSpring({ paddingTop: height + 8 });
+	const styles = useSpring({ paddingTop: topHeight + 8, paddingBottom: bottomHeight + 8 });
 	const theme = useTheme();
 
 	return (
@@ -121,18 +133,26 @@ export default function FloatingBarWithContent({
 				width: '100%',
 				height: '100%',
 				overflow: 'hidden',
-				border: theme?.border1Base,
-				borderRadius: '8px'
+				border: border ? border : `none`,
+				borderRadius: '8px',
+				backgroundColor: ''
 				// padding: '8px'
 			}}
 		>
-			<FloatingBarScrollContainer ref={panelRef} {...props}>
-				<FloatingBar ref={floatRef} barContent={barContent} float={!topItemInView}></FloatingBar>
+			<FloatingBarScrollContainer style={{ background: '' }} ref={panelRef} {...props}>
+				<FloatingBar
+					ref={topFloatRef}
+					content={topBarContent}
+					float={!topItemInView}
+					align={'top'}
+				></FloatingBar>
 				<FloatingBarScrollContent ref={scrollContainerRef} style={styles}>
 					{scrollContent?.map((item, index) => (
 						<animated.div
 							key={index}
-							ref={index === 0 ? topItemRef : undefined}
+							ref={
+								index === 0 ? topItemRef : index === scrollContent.length - 1 ? bottomItemRef : null
+							}
 							style={{
 								width: '100%',
 								height: scrollContent.length === 1 ? '100%' : 'fit-content'
@@ -142,7 +162,14 @@ export default function FloatingBarWithContent({
 						</animated.div>
 					))}
 				</FloatingBarScrollContent>
-				{extraContent}
+				{bottomBarContent && (
+					<FloatingBar
+						ref={bottomFloatRef}
+						content={bottomBarContent}
+						float={!bottomItemInView}
+						align={'bottom'}
+					></FloatingBar>
+				)}
 			</FloatingBarScrollContainer>
 		</div>
 	);
