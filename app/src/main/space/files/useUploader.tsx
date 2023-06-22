@@ -1,10 +1,8 @@
 // @ts-nocheck
 import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
+import { http, serverOrigin } from '~/App';
 import { authStore, currentSpaceCache, useSpaceMutation } from '~/rspc';
-
-const http = isDev ? 'http' : 'https';
-const serverOrigin = import.meta.env.SERVER_BASE || 'localhost:8080';
 
 export const useUploader = () => {
 	const [items, setItems] = useState<DataTransferItemList | null>(null);

@@ -1,0 +1,20 @@
+# flyctl launch added from .gitignore
+**/node_modules
+**/dist
+**/.eslintcache
+**/.turbo
+**/.DS_Store
+**/cache
+**/.env
+**/mock/*
+
+
+**/target
+**/.env
+**/mock
+
+**/crates/prisma/src/prisma.rs
+
+# flyctl launch added from node_modules/tailwindcss/stubs/.gitignore
+!node_modules/tailwindcss/stubs/**/*
+fly.toml

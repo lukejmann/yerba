@@ -2,6 +2,7 @@ import { RefObject } from 'react';
 import styled, { useTheme } from 'styled-components/macro';
 // @ts-ignore
 import { ReactComponent as Logo } from '~/assets/logo';
+import { authStore } from '~/rspc';
 import { RowFixed } from '~/ui';
 
 const HeaderContainer = styled.div`
@@ -26,8 +27,11 @@ const TopBar = () => {
 					opacity: 0.5,
 					fontSize: '8px'
 				}}
+				onClick={() => {
+					authStore.jwt = null;
+				}}
 			>
-				AUTH
+				RESET
 			</RowFixed>
 		</HeaderContainer>
 	);

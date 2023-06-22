@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router';
-import { authStore } from '~/rspc';
+import { authStore, useAuth } from '~/rspc';
 
 export const AuthUpdater = () => {
-	const { jwt } = authStore;
+	const jwt = useAuth();
 
 	const navigate = useNavigate();
 
