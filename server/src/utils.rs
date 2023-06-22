@@ -28,6 +28,10 @@ pub fn u2b(uuid: Uuid) -> Vec<u8> {
     uuid.as_bytes().to_vec()
 }
 
+pub fn b2u(bytes: &[u8]) -> Uuid {
+    Uuid::from_slice(bytes).unwrap()
+}
+
 /// load_and_migrate will load the database from the given path and migrate it to the latest version of the schema.
 pub async fn load_and_migrate(db_url: &str) -> Result<PrismaClient, rspc::Error> {
     let client = prisma::new_client_with_url(db_url)

@@ -2,6 +2,7 @@ import { RefObject } from 'react';
 import styled, { useTheme } from 'styled-components/macro';
 // @ts-ignore
 import { ReactComponent as Logo } from '~/assets/logo';
+import { authStore, useAccount, useAppContext } from '~/rspc';
 import { RowFixed } from '~/ui';
 import SectionButton from '~/ui/buttons';
 import { modalManager } from '~/ui/modal/modal';
@@ -21,23 +22,46 @@ const HeaderContainer = styled.div`
 `;
 
 const TopBar = () => {
+	const { data: account } = useAccount();
+	// const
 	return (
 		<HeaderContainer>
 			<Logo style={{ width: '44px' }} />
 			<RowFixed
 				style={{
 					opacity: 0.5,
-					fontSize: '8px'
+					fontSize: '8px',
+					gap: '8px'
 				}}
 			>
-				<SectionButton
-					onClick={() => {
-						console.log('clicked');
-						modalManager.create((props: any) => <AuthModal type="sign_up" {...props} />);
-					}}
-				>
-					Sign in / Sign up
-				</SectionButton>
+				{!account ? (
+					<>
+						<SectionButton
+							onClick={() => {
+								console.log('clicked');
+								modalManager.create((props: any) => <AuthModal type="sign_up" {...props} />);
+							}}
+							text="Sign up"
+						></SectionButton>
+						<SectionButton
+							onClick={() => {
+								console.log('clicked');
+								modalManager.create((props: any) => <AuthModal type="sign_in" {...props} />);
+							}}
+							text="Sign in"
+						></SectionButton>
+					</>
+				) : (
+					<>
+						{account.username}
+						<SectionButton
+							onClick={() => {
+								authStore.jwt = null;
+							}}
+							text="Logout"
+						></SectionButton>
+					</>
+				)}
 			</RowFixed>
 		</HeaderContainer>
 	);

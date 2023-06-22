@@ -292,6 +292,7 @@ export function Modal<S extends FieldValues>({
 									}}
 									form={form}
 									onSubmit={async (e) => {
+										console.log('submit');
 										e?.preventDefault();
 										await onSubmit?.(e);
 										modal.onSubmit?.();
@@ -310,15 +311,22 @@ export function Modal<S extends FieldValues>({
 									<FormContent style={{ width: '100%' }}>
 										{form.formState.isSubmitting && <Loader />}
 
-										<SectionButton
-											//@ts-ignore
+										<button
+											// as="button"
+											type="submit"
+											// text="Submit"
+											disabled={form.formState.isSubmitting}
+										>
+											Submit
+										</button>
+										{/* <SectionButton
 											as="button"
 											type="submit"
 											text="Submit"
 											disabled={form.formState.isSubmitting}
 										>
 											Submit
-										</SectionButton>
+										</SectionButton> */}
 									</FormContent>
 								</Form>
 							</AnimatedModalContent>

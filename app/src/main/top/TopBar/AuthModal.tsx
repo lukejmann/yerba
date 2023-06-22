@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { z } from 'zod';
-import { useBridgeMutation, useUserMutation } from '~/rspc';
+import { authStore, useBridgeMutation, useUserMutation } from '~/rspc';
 import { FormInputRow, Modal, UseModalProps, useModal, useZodForm } from '~/ui';
 
 interface AuthModalProps extends UseModalProps {
@@ -13,16 +13,25 @@ const schema = z.object({
 });
 
 export default (props: AuthModalProps) => {
-	// const login = useBridgeMutation('users.create', {
-	// 	onError: () => {
-	// 		console.error('Failed to create user');
-	// 	}
-	// });
+	const signUp = useUserMutation('users.signUp', {
+		onError: () => {
+			console.error('Failed to create user');
+		},
+		onSuccess: (jwt) => {
+			console.log('auth: Created user');
+			authStore.jwt = jwt;
+		}
+	});
 
-	// const signUp = useUserMutation('users.attach_jwt', {
-	// 	onError: () => {
-	// 		console.error('Failed to create user');
-	// 	}
+	const login = useBridgeMutation('users.logIn', {
+		onError: () => {
+			console.error('Failed to create user');
+		},
+		onSuccess: (jwt) => {
+			console.log('auth: Logged in');
+			authStore.jwt = jwt;
+		}
+	});
 	// });
 
 	const form = useZodForm({
@@ -38,17 +47,17 @@ export default (props: AuthModalProps) => {
 	return (
 		<Modal
 			form={form}
-			onSubmit={form.handleSubmit(
-				(data: any) => {}
-				// props.type === 'sign_in' ? login.mutateAsync(data) : signUp.mutateAsync(data)
-			)}
+			onSubmit={form.handleSubmit((data: any) => {
+				console.log("in auth modal's onSubmit");
+				props.type === 'sign_in' ? login.mutateAsync(data) : signUp.mutateAsync(data);
+			})}
 			dialog={useModal(props)}
 			title={props.type === 'sign_in' ? 'Sign In' : 'Sign Up'}
-			description="Configure your erasure settings."
-			loading={false}
-			// loading={login.isLoading || signUp.isLoading}
+			description={props.type === 'sign_in' ? 'Sign in to your account' : 'Create a new account'}
+			loading={login.isLoading || signUp.isLoading}
 		>
 			<FormInputRow {...form.register('username', { required: true })} placeholder="Username" />
+			<FormInputRow {...form.register('password', { required: true })} placeholder="Password" />
 		</Modal>
 	);
 };

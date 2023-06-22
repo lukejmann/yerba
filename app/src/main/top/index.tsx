@@ -1,12 +1,12 @@
 import { Navigate, Outlet, RouteObject } from 'react-router-dom';
-import { authStore, useSpaces } from '~/rspc';
+import { authStore, useAuth, useSpaces } from '~/rspc';
 import userRoutes from '../user';
 
 const Index = () => {
 	console.log('rendering index');
 	const spaces = useSpaces();
 
-	const { jwt } = authStore;
+	const jwt = useAuth();
 
 	if (!jwt) return <Navigate to="no-user" />;
 

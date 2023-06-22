@@ -1,7 +1,7 @@
 import { PropsWithChildren, createContext, useContext, useMemo } from 'react';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { useBridgeQuery, useUserQuery } from '.';
-import { SpaceWrapped, User, UserWithToken } from './core';
+import { Account, SpaceWrapped, User, UserWithToken } from './core';
 
 export function persistKey<T extends object>(localStorageKey: string, initialObject?: T): T {
 	const d = localStorage.getItem(localStorageKey);
@@ -19,7 +19,6 @@ export interface AppContext {
 	currentSpaceId: string | null;
 	spaces: ReturnType<typeof useSpaces>;
 	space: SpaceWrapped | null | undefined;
-	account: Account | null | undefined;
 }
 
 export const useSpaces = () => useUserQuery(['spaces.list'], {});
@@ -33,7 +32,7 @@ interface AppContextProviderProps extends PropsWithChildren {
 
 export const AppContextProvider = ({ children, currentSpaceId }: AppContextProviderProps) => {
 	const { jwt } = useSnapshot(authStore);
-	const account = useAccount();
+
 	const spaces = useSpaces();
 
 	console.log('jwt', jwt);
@@ -45,7 +44,7 @@ export const AppContextProvider = ({ children, currentSpaceId }: AppContextProvi
 	currentSpaceCache.id = currentSpaceId;
 
 	return (
-		<AppContext.Provider value={{ currentSpaceId, spaces, space, jwt, account }}>
+		<AppContext.Provider value={{ currentSpaceId, spaces, space, jwt }}>
 			{children}
 		</AppContext.Provider>
 	);

@@ -6,18 +6,25 @@ export type Procedures = {
         { key: "files.list", input: SpaceArgs<null>, result: FileWrapped[] } | 
         { key: "invalidation.test-invalidate", input: never, result: number } | 
         { key: "spaces.list", input: UserArgs<null>, result: SpaceWrapped[] } | 
-        { key: "tasks.list", input: SpaceArgs<null>, result: Task[] },
+        { key: "tasks.list", input: SpaceArgs<null>, result: Task[] } | 
+        { key: "users.getAccount", input: UserArgs<null>, result: Account | null },
     mutations: 
         { key: "invalidation.test-invalidate-mutation", input: SpaceArgs<null>, result: null } | 
         { key: "spaces.create", input: UserArgs<CreateSpaceArgs>, result: SpaceWrapped } | 
         { key: "spaces.delete", input: UserArgs<DeleteSpaceArgs>, result: null } | 
         { key: "spaces.edit", input: SpaceArgs<EditSpaceArgs>, result: Meta } | 
         { key: "tasks.uploadFile", input: SpaceArgs<FileUploadTaskInfo>, result: null } | 
-        { key: "users.create", input: never, result: UserWithToken },
+        { key: "users.create", input: never, result: UserWithToken } | 
+        { key: "users.logIn", input: LogInArgs, result: string } | 
+        { key: "users.signUp", input: UserArgs<AttachToAccountArgs>, result: string },
     subscriptions: 
         { key: "invalidation.listen", input: never, result: InvalidateOperationEvent[] } | 
         { key: "tasks.updates", input: SpaceArgs<null>, result: Task[] }
 };
+
+export type Account = { id: number[]; username: string; password: string; date_used: string; user_id: number[] }
+
+export type AttachToAccountArgs = { username: string; password: string }
 
 export type CreateSpaceArgs = { name: string }
 
@@ -32,6 +39,8 @@ export type FileWithTasks = { id: number[]; path: string; name: string; extensio
 export type FileWrapped = { id: string; name: string; file_with_tasks: FileWithTasks }
 
 export type InvalidateOperationEvent = { key: string; arg: any; result: any | null }
+
+export type LogInArgs = { username: string; password: string }
 
 export type Meta = { id: number[]; name: string; description: string; color: string | null }
 

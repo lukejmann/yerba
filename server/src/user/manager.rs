@@ -149,6 +149,35 @@ impl UserManager {
         })
     }
 
+    // generates a new jwt for the given user and appends it to the user's jwts.
+    pub(crate) async fn generate_jwt(&self, user_id: Uuid) -> Result<String> {
+        let expires: chrono::DateTime<chrono::Utc> =
+            chrono::Utc::now() + chrono::Duration::days(30);
+
+        let claims = Claims {
+            sub: user_id, // or whatever the field is named in your payload
+            // set here the other fields
+            exp: expires.timestamp() as usize,
+        };
+
+        let token = jsonwebtoken::encode(
+            &jsonwebtoken::Header::new(Algorithm::HS256),
+            &claims,
+            &jsonwebtoken::EncodingKey::from_secret(SECRET),
+        )
+        .unwrap();
+
+        let new_jwt = self
+            .node_context
+            .db
+            .jwt()
+            .create(token, user::id::equals(user_id.as_bytes().to_vec()), vec![])
+            .exec()
+            .await?;
+
+        Ok(new_jwt.token)
+    }
+
     pub(crate) async fn create_with_uuid(&self, id: Uuid) -> Result<user::Data> {
         let id_vec: Vec<u8> = id.as_bytes().to_vec();
 
