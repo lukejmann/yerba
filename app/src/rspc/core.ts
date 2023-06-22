@@ -16,8 +16,9 @@ export type Procedures = {
         { key: "tasks.uploadFile", input: SpaceArgs<FileUploadTaskInfo>, result: null } | 
         { key: "users.create", input: never, result: UserWithToken },
     subscriptions: 
+        { key: "files.updates", input: SpaceArgs<null>, result: FileWithTasks[] } | 
         { key: "invalidation.listen", input: never, result: InvalidateOperationEvent[] } | 
-        { key: "tasks.updates", input: SpaceArgs<null>, result: Task[] }
+        { key: "tasks.updates", input: SpaceArgs<null>, result: TaskWithFile[] }
 };
 
 export type CreateSpaceArgs = { name: string }
@@ -26,9 +27,11 @@ export type DeleteSpaceArgs = { id: string }
 
 export type EditSpaceArgs = { name: string | null; description: string | null }
 
+export type File = { id: number[]; id_str: string; path: string; name: string; extension: string; status: number; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[] }
+
 export type FileUploadTaskInfo = { path: string }
 
-export type FileWithTasks = { id: number[]; path: string; name: string; extension: string; status: number; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: { id: number[]; task_type: string; status: number }[] }
+export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; status: number; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: { id: number[]; id_str: string; task_type: string; status: number }[] }
 
 export type FileWrapped = { id: string; name: string; file_with_tasks: FileWithTasks }
 
@@ -36,7 +39,7 @@ export type InvalidateOperationEvent = { key: string; arg: any; result: any | nu
 
 export type LearnFileTaskInfo = { file_id: string }
 
-export type Meta = { id: number[]; name: string; description: string; color: string | null }
+export type Meta = { id: number[]; id_str: string; name: string; description: string; color: string | null }
 
 /**
  * Can wrap a query argument to require it to contain a `space_id` and provide helpers for working with spaces.
@@ -45,9 +48,11 @@ export type SpaceArgs<T> = { jwt_token: string; space_id: string; arg: T }
 
 export type SpaceWrapped = { id: string; meta: Meta }
 
-export type Task = { id: number[]; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null }
+export type Task = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null }
 
-export type User = { id: number[]; account_attached: boolean }
+export type TaskWithFile = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null; File: File | null }
+
+export type User = { id: number[]; id_str: string; account_attached: boolean }
 
 /**
  * Can wrap a query argument to require it to contain a `user_id` and provide helpers for working with users.

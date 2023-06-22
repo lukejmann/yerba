@@ -1,11 +1,15 @@
-use crate::{api::CoreEvent, space::Space, utils::u2b};
+use crate::{
+    api::{file_with_tasks, task_with_file, CoreEvent},
+    space::Space,
+    utils::{u2b, u2s},
+};
 use std::{
     collections::{hash_map::DefaultHasher, VecDeque},
     hash::{Hash, Hasher},
     sync::Arc,
 };
 
-use custom_prisma::prisma::{space as db_space, task};
+use custom_prisma::prisma::{file, space as db_space, task};
 use serde::{de::DeserializeOwned, Serialize};
 
 use tracing::debug;
@@ -68,9 +72,9 @@ pub trait TaskExec: Send + Sync + Sized {
 #[async_trait::async_trait]
 pub trait DTask: Send + Sync {
     fn id(&self) -> Uuid;
-    fn parent_id(&self) -> Option<Uuid>;
+    // fn parent_id(&self) -> Option<Uuid>;
     fn space_id(&self) -> Option<Uuid>;
-    fn file_id(&self) -> Option<Uuid>;
+    // fn file_id(&self) -> Option<Uuid>;
     fn task_type(&self) -> &'static str;
     async fn setup(&mut self, space: &Space, dispatcher: Arc<Dispatcher>) -> Result<()>;
     async fn run(&mut self, space: &Space, dispatcher: Arc<Dispatcher>) -> Result<()>;
@@ -92,8 +96,8 @@ pub struct TaskState<Task: TaskExec> {
 
 pub struct Task<T: TaskExec> {
     id: Uuid,
-    parent_id: Option<Uuid>,
-    file_id: Option<Uuid>,
+    // parent_id: Option<Uuid>,
+    // file_id: Option<Uuid>,
     space_id: Option<Uuid>,
     task_info: TaskState<T>,
     task_with_state: T,
@@ -133,8 +137,8 @@ where
         let id = Uuid::new_v4();
         Box::new(Self {
             id,
-            parent_id: None,
-            file_id: None,
+            // parent_id: None,
+            // file_id: None,
             space_id: None,
             task_info: TaskState { info, data: None },
             task_with_state: TaskExec::new(),
@@ -149,9 +153,9 @@ impl<T: TaskExec> DTask for Task<T> {
         self.id
     }
 
-    fn parent_id(&self) -> Option<Uuid> {
-        self.parent_id
-    }
+    // fn parent_id(&self) -> Option<Uuid> {
+    //     self.parent_id
+    // }
 
     fn space_id(&self) -> Option<Uuid> {
         self.space_id
@@ -161,9 +165,9 @@ impl<T: TaskExec> DTask for Task<T> {
         <T as TaskExec>::TYPE
     }
 
-    fn file_id(&self) -> Option<Uuid> {
-        self.file_id
-    }
+    // fn file_id(&self) -> Option<Uuid> {
+    //     self.file_id
+    // }
 
     fn hash(&self) -> u64 {
         <T::Info as TaskInfo>::hash(&self.task_info.info)
@@ -183,6 +187,7 @@ impl<T: TaskExec> DTask for Task<T> {
             .task()
             .create(
                 u2b(self_id),
+                u2s(self_id),
                 self_hash,
                 self_task_type,
                 db_space::id::equals(u2b(space.clone().id)),
@@ -204,10 +209,27 @@ impl<T: TaskExec> DTask for Task<T> {
             .db
             .task()
             .find_unique(task::id::equals(u2b(self.id)))
+            .include(task_with_file::include())
             .exec()
             .await
             .with_context(|| "Failed to find task")?
             .context("Failed to find task")?;
+
+        if let Some(file) = task_data.clone().file {
+            let file_with_tasks = space
+                .db
+                .file()
+                .find_unique(file::id::equals(file.id))
+                .include(file_with_tasks::include())
+                .exec()
+                .await
+                .with_context(|| "Failed to find file")?
+                .context("Failed to find file")?;
+
+            space.emit(CoreEvent::FileUpdate {
+                files: vec![file_with_tasks],
+            });
+        }
 
         space.emit(CoreEvent::TaskUpdate {
             tasks: vec![task_data],
@@ -226,10 +248,27 @@ impl<T: TaskExec> DTask for Task<T> {
             .db
             .task()
             .find_unique(task::id::equals(u2b(self.id)))
+            .include(task_with_file::include())
             .exec()
             .await
             .with_context(|| "Failed to find task")?
             .context("Failed to find task")?;
+
+        if let Some(file) = task_data.clone().file {
+            let file_with_tasks = space
+                .db
+                .file()
+                .find_unique(file::id::equals(file.id))
+                .include(file_with_tasks::include())
+                .exec()
+                .await
+                .with_context(|| "Failed to find file")?
+                .context("Failed to find file")?;
+
+            space.emit(CoreEvent::FileUpdate {
+                files: vec![file_with_tasks],
+            });
+        }
 
         space.emit(CoreEvent::TaskUpdate {
             tasks: vec![task_data],
@@ -253,6 +292,7 @@ impl<T: TaskExec> DTask for Task<T> {
                 task::id::equals(u2b(self.id)),
                 vec![task::status::set(task_status)],
             )
+            .include(task_with_file::include())
             .exec()
             .await
             .with_context(|| {
@@ -261,6 +301,24 @@ impl<T: TaskExec> DTask for Task<T> {
                     task_status, self.id
                 )
             })?;
+
+        if let Some(file) = task_data.clone().file {
+            let file_with_tasks = space
+                .db
+                .file()
+                .find_unique(file::id::equals(file.id))
+                .include(file_with_tasks::include())
+                .exec()
+                .await
+                .with_context(|| "Failed to find file")?
+                .context("Failed to find file")?;
+
+            debug!("Finished task {} – sending update", self.id);
+
+            space.emit(CoreEvent::FileUpdate {
+                files: vec![file_with_tasks],
+            });
+        }
         space.emit(CoreEvent::TaskUpdate {
             tasks: vec![task_data],
         });

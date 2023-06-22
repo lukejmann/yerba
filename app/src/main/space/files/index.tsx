@@ -1,9 +1,18 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components/macro';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { proxyMap, subscribeKey } from 'valtio/utils';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
-import { FileWrapped, Task, useSpaceMutation, useSpaceQuery, useSpaceSubscription } from '~/rspc';
+import {
+	File,
+	FileWithTasks,
+	FileWrapped,
+	Task,
+	useSpaceMutation,
+	useSpaceQuery,
+	useSpaceSubscription
+} from '~/rspc';
 import { ItemSubtitle, ItemTitle, RowBetween, RowFlat, SectionHeader, opacify } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import SectionButton from '~/ui/buttons';
@@ -37,24 +46,24 @@ export const filesStore = proxy({
 	selectedFile: null as null | FileWrapped
 });
 
-export const fileIdToActiveTasks = proxyMap(
-	new Map<number[], { id: number[]; task_type: string; status: number }[]>()
-);
+// export const fileIdToActiveTasks = proxyMap(
+// 	new Map<string, { id_str: string; task_type: string; status: number }[]>()
+// );
 
-const subscribeMapKey = <K extends unknown, V extends unknown>(
-	proxyMapObject: Map<K, V>,
-	key: K,
-	callback: (v: V | undefined) => void
-) => {
-	let prev: V | undefined;
-	return subscribe(proxyMapObject, () => {
-		const nextValue = proxyMapObject.get(key);
-		if (!prev || prev !== nextValue) {
-			prev = nextValue;
-			callback(nextValue);
-		}
-	});
-};
+// const subscribeMapKey = <K extends unknown, V extends unknown>(
+// 	proxyMapObject: Map<K, V>,
+// 	key: K,
+// 	callback: (v: V | undefined) => void
+// ) => {
+// 	let prev: V | undefined;
+// 	return subscribe(proxyMapObject, () => {
+// 		const nextValue = proxyMapObject.get(key);
+// 		if (!prev || prev !== nextValue) {
+// 			prev = nextValue;
+// 			callback(nextValue);
+// 		}
+// 	});
+// };
 
 export default () => {
 	const { space, spaces, currentSpaceId } = useSpacesContext();
@@ -63,52 +72,40 @@ export default () => {
 		filesStore.selectedFile = null;
 	}, [currentSpaceId]);
 
+	const { selectedFile } = useSnapshot(filesStore);
+
 	const { data: files } = useSpaceQuery(['files.list']);
 	useEffect(() => {
-		if (!files) return;
-		files.forEach((file) => {
-			const activeTasks = file.file_with_tasks.tasks;
-			fileIdToActiveTasks.set(file.file_with_tasks.id, activeTasks);
-		});
+		if (!selectedFile && files && files?.length > 0) {
+			filesStore.selectedFile = files[0] ?? null;
+		}
 	}, [files]);
 
 	console.log('files', files);
 
+	const queryClient = useQueryClient();
+
 	// TODO: move out of here
-	useSpaceSubscription(['tasks.updates'], {
+	useSpaceSubscription(['files.updates'], {
 		onStarted: () => {
 			console.log('tasks.updates init');
 		},
 		onError: (err) => {
 			console.error('tasks.updates error', err);
 		},
-		onData: (tasks) => {
-			console.log('tasks.updates data', tasks);
-			tasks.forEach((task) => {
-				const { file_id } = task;
-				console.log('file_id', file_id);
-				if (!file_id) return;
-				const activeTasks = file_id ? fileIdToActiveTasks.get(file_id) ?? [] : [];
-				const taskIndex = activeTasks.findIndex((j) => j.id === task.id);
-				if (taskIndex !== -1) {
-					activeTasks.splice(taskIndex, 1, {
-						id: task.id,
-						task_type: task.task_type,
-						status: task.status
-					});
-				} else {
-					activeTasks.push({
-						id: task.id,
-						task_type: task.task_type,
-						status: task.status
-					});
-				}
-				fileIdToActiveTasks.set(file_id, activeTasks);
+		onData: (updatedFiles) => {
+			// replace the task in the map
+			console.log('tasks.updates data', updatedFiles);
+			queryClient.setQueryData(['files.list'], (lastFiles: FileWithTasks[] | undefined) => {
+				if (!lastFiles) return undefined;
+				const newFiles = lastFiles.map((file) => {
+					const inUpdated = updatedFiles.find((f) => f.id === file.id);
+					if (!inUpdated) return file;
+					return inUpdated;
+				});
 			});
 		}
 	});
-
-	// const fileStoreSnap = useSnapshot(filesStore);
 
 	const { setItems } = useUploader();
 
@@ -171,37 +168,35 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 
 	const { selectedFile } = useSnapshot(filesStore);
 
-	const subKey = file.file_with_tasks.id;
+	const subKey = file.file_with_tasks.id_str;
 
 	useEffect(() => {
-		subscribeMapKey(fileIdToActiveTasks, subKey, () => {
-			const activeTasks = [
-				...(fileIdToActiveTasks.get(file.file_with_tasks.id) || []),
-				...file.file_with_tasks.tasks
-			];
-			console.log('activeTasks', activeTasks);
-			const uploadingTasksRunning = activeTasks.filter(
-				(task) => task.task_type === 'file_upload' && task.status === 0
-			);
-			const uploadingTasksCompleted = activeTasks.filter(
-				(task) => task.task_type === 'file_upload' && task.status === 1
-			);
-			// console;
-			const learningTasksRunning = activeTasks.filter(
-				(task) => task.task_type === 'learn_file' && task.status === 0
-			);
-			const learningTasksCompleted = activeTasks.filter(
-				(task) => task.task_type === 'learn_file' && task.status === 1
-			);
-			setStatus(() => {
-				if (learningTasksCompleted.length > 0) return FileStatus.Learned;
-				if (learningTasksRunning.length > 0) return FileStatus.Learning;
-				if (uploadingTasksCompleted.length > 0) return FileStatus.Uploaded;
-				if (uploadingTasksRunning.length > 0) return FileStatus.Uploading;
-				return FileStatus.Failed;
-			});
+		const tasks = file.file_with_tasks.tasks;
+		const uploadingTasksRunning = tasks.filter(
+			(task) => task.task_type === 'file_upload' && task.status === TaskStatus.InProgress
+		);
+		const uploadingTasksCompleted = tasks.filter(
+			(task) => task.task_type === 'file_upload' && task.status === TaskStatus.Completed
+		);
+		// console;
+		const learningTasksRunning = tasks.filter(
+			(task) => task.task_type === 'learn_file' && task.status === TaskStatus.InProgress
+		);
+		const learningTasksCompleted = tasks.filter(
+			(task) => task.task_type === 'learn_file' && task.status === TaskStatus.Completed
+		);
+		console.log('uploadingTasksRunning', uploadingTasksRunning);
+		console.log('uploadingTasksCompleted', uploadingTasksCompleted);
+		console.log('learningTasksRunning', learningTasksRunning);
+		console.log('learningTasksCompleted', learningTasksCompleted);
+		setStatus(() => {
+			if (learningTasksCompleted.length > 0) return FileStatus.Learned;
+			if (learningTasksRunning.length > 0) return FileStatus.Learning;
+			if (uploadingTasksCompleted.length > 0) return FileStatus.Uploaded;
+			if (uploadingTasksRunning.length > 0) return FileStatus.Uploading;
+			return FileStatus.Failed;
 		});
-	}, [status]);
+	}, [file.file_with_tasks.tasks]);
 
 	const learnFile = useSpaceMutation('tasks.learnFile');
 

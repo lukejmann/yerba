@@ -42,6 +42,18 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                 })
         })
         // .with_collector(collector)
+        .procedure("learnFile", {
+            R.with2(space())
+                .mutation(|(_, space), args: LearnFileTaskInfo| async move {
+                    debug!("Beginning learning");
+                    let learn_taskId = space
+                        .clone()
+                        .dispatcher
+                        .dispatch(&space, args.clone().runnable())
+                        .await?;
+                    Ok(())
+                })
+        })
         .procedure("updates", {
             R.with2(space()).subscription(|(ctx, _), _: ()| async move {
                 let mut event_bus_rx = ctx.event_bus.0.subscribe();
@@ -54,17 +66,5 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                     }
                 }
             })
-        })
-        .procedure("learnFile", {
-            R.with2(space())
-                .mutation(|(_, space), args: LearnFileTaskInfo| async move {
-                    debug!("Beginning learning");
-                    let learn_taskId = space
-                        .clone()
-                        .dispatcher
-                        .dispatch(&space, args.clone().runnable())
-                        .await?;
-                    Ok(())
-                })
         })
 }

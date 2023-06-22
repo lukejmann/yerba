@@ -1,6 +1,10 @@
 use crate::{
-    get_spaces_dir, invalidate_query, space::SpaceWrapped, tasks::dispatcher::Dispatcher,
-    user::User, utils::u2b, NodeContext,
+    get_spaces_dir, invalidate_query,
+    space::SpaceWrapped,
+    tasks::dispatcher::Dispatcher,
+    user::User,
+    utils::{u2b, u2s},
+    NodeContext,
 };
 
 use std::sync::Arc;
@@ -111,7 +115,7 @@ impl SpaceManager {
             .node_context
             .db
             .meta()
-            .create(meta_id_vec.clone(), name, description, vec![])
+            .create(meta_id_vec.clone(), u2s(meta_id), name, description, vec![])
             .exec()
             .await?;
 
@@ -121,6 +125,7 @@ impl SpaceManager {
             .space()
             .create(
                 space_id_vec.clone(),
+                u2s(space_id),
                 meta::id::equals(meta_id_vec),
                 user::id::equals(user_id_vec),
                 vec![],

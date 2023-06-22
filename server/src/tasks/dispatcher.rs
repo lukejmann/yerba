@@ -80,8 +80,8 @@ impl Dispatcher {
 
                     // STEP 3: We mark the task as completed in the db
                     let task_status = match &result {
-                        Ok(_) => 2,
-                        Err(_) => 1,
+                        Ok(_) => 1,
+                        Err(_) => 2,
                     };
 
                     if let Err(e) = result {

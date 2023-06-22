@@ -1,11 +1,14 @@
-use crate::{api::CoreEvent, tasks::dispatcher::Dispatcher, NodeContext};
+use crate::{api::CoreEvent, get_spaces_dir, tasks::dispatcher::Dispatcher, NodeContext};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
 use std::{
     fmt::{Debug, Formatter},
+    path::PathBuf,
     sync::Arc,
 };
+
+pub use anyhow::{Context, Result};
 
 use custom_prisma::prisma::{meta, PrismaClient};
 
@@ -55,6 +58,11 @@ impl Space {
         if let Err(e) = self.node_context.event_bus_tx.send(event) {
             warn!("Error sending event to event bus: {e:?}");
         }
+    }
+
+    pub(crate) async fn path(&self) -> PathBuf {
+        let spaces_dir = get_spaces_dir().await;
+        spaces_dir.join(self.id.to_string())
     }
 }
 

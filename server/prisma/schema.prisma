@@ -22,6 +22,7 @@ model JWT {
 
 model User {
     id               Bytes     @id
+    id_str           String
     account_attached Boolean   @default(false)
     jwts             JWT[]
     Account          Account[]
@@ -30,6 +31,7 @@ model User {
 
 model Account {
     id        Bytes    @id
+    id_str    String
     name      String
     email     String
     password  String
@@ -43,6 +45,7 @@ model Account {
 
 model Meta {
     id          Bytes   @id
+    id_str      String
     name        String
     description String
     color       String?
@@ -53,7 +56,8 @@ model Meta {
 
 model Space {
     // id     Int   @id @default(autoincrement())
-    id Bytes @id
+    id     Bytes  @id
+    id_str String
 
     meta_id Bytes @unique
     meta    Meta  @relation(fields: [meta_id], references: [id])
@@ -68,7 +72,8 @@ model Space {
 }
 
 model File {
-    id Bytes @id
+    id     Bytes  @id
+    id_str String
 
     path String
 
@@ -91,8 +96,9 @@ model File {
 }
 
 model Task {
-    id   Bytes  @id
-    hash String
+    id     Bytes  @id
+    id_str String
+    hash   String
 
     status    Int    @default(0) // 0 = in-progress, 1 = success, 2 = failed
     task_type String

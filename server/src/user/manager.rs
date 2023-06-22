@@ -1,4 +1,4 @@
-use crate::NodeContext;
+use crate::{utils::u2s, NodeContext};
 
 use jsonwebtoken::{Algorithm, TokenData};
 
@@ -156,7 +156,7 @@ impl UserManager {
             .node_context
             .db
             .user()
-            .create(id_vec, vec![])
+            .create(id_vec, u2s(id), vec![])
             .exec()
             .await?;
 

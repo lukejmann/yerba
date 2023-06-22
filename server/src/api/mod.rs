@@ -1,10 +1,10 @@
+use custom_prisma::prisma::{file, task};
 use rspc::{alpha::Rspc, Config};
 use serde::Serialize;
 use specta::Type;
 use std::sync::Arc;
 
 use crate::Node;
-use custom_prisma::prisma::task;
 use utils::{InvalidRequests, InvalidateOperationEvent};
 
 #[allow(non_upper_case_globals)]
@@ -13,10 +13,13 @@ pub(self) const R: Rspc<Ctx> = Rspc::new();
 pub type Ctx = Arc<Node>;
 pub type Router = rspc::Router<Ctx>;
 
+file::include!(file_with_tasks { tasks : select { id id_str task_type status } });
+task::include!(task_with_file { file });
+
 #[derive(Debug, Clone, Serialize, Type)]
 pub enum CoreEvent {
-    // server sends down task updates, local store should sort them into file:tasks and category:task
-    TaskUpdate { tasks: Vec<task::Data> },
+    TaskUpdate { tasks: Vec<task_with_file::Data> },
+    FileUpdate { files: Vec<file_with_tasks::Data> },
     InvalidateOperation(InvalidateOperationEvent),
 }
 

@@ -1,4 +1,4 @@
-use crate::utils::u2b;
+use crate::utils::{u2b, u2s};
 use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::hash::{Hash, Hasher};
 
@@ -68,6 +68,7 @@ impl TaskExec for FileUploadTask {
             .file()
             .create(
                 u2b(file_new_id),
+                u2s(space.id),
                 info.path.to_string(),
                 name.to_string(),
                 extension.to_string(),
@@ -108,9 +109,12 @@ impl TaskExec for FileUploadTask {
             // Pause for a short period
             tokio::time::sleep(Duration::from_millis(100)).await;
 
+            let space_path = space.path().await;
+            let path = space_path.join(&info.path);
+
             // Get the current file size
-            let current_size = metadata(&info.path)
-                .context("Failed to get metadata")?
+            let current_size = metadata(&path)
+                .context(format!("Failed to get file size for {:?}", info.path))?
                 .len()
                 .try_into()?;
 

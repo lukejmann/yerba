@@ -78,6 +78,17 @@ impl TaskExec for LearnFileTask {
             .find_unique(file::id::equals(u2b(info.file_id)))
             .exec()
             .await?;
+
+        space
+            .db
+            .task()
+            .update(
+                task::id::equals(u2b(task_id)),
+                vec![task::file::connect(file::id::equals(u2b(info.file_id)))],
+            )
+            .exec()
+            .await?;
+
         let file = file.context("Failed to find file")?;
         let file_path = file.path.clone();
         task_info.data = Some(LearnFileTaskState {
