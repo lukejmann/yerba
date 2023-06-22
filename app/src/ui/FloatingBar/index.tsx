@@ -91,6 +91,7 @@ const FloatingBarScrollContent = styled(animated.div)`
 interface FloatingBarWithContentProps {
 	barContent?: ReactNode;
 	scrollContent?: ReactNode[];
+	extraContent?: ReactNode[];
 	scrollRef?: any;
 	panelRef?: any;
 }
@@ -98,6 +99,7 @@ interface FloatingBarWithContentProps {
 export default function FloatingBarWithContent({
 	barContent,
 	scrollContent,
+	extraContent,
 	scrollRef,
 	panelRef,
 	...props
@@ -140,6 +142,7 @@ export default function FloatingBarWithContent({
 						</animated.div>
 					))}
 				</FloatingBarScrollContent>
+				{extraContent}
 			</FloatingBarScrollContainer>
 		</div>
 	);

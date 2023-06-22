@@ -32,6 +32,9 @@ export const SectionHeader = styled(TextBase)`
 
 export const ItemTitle = styled(TextBase)`
 	color: ${({ theme }) => theme.text1};
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 `;
 
 export const ItemSubtitle = styled(SubtextBase)`

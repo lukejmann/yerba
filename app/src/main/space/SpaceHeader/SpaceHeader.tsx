@@ -67,7 +67,7 @@ export default () => {
 					edit.mutate({ name: spaceTitle ?? null, description: spaceSubtitle ?? null });
 					console.log('blur. set title to', spaceTitle);
 				}}
-				width={spaceTitle.length * 10}
+				width={spaceTitle.length * 12}
 			/>
 			<Input
 				style={{
@@ -86,7 +86,7 @@ export default () => {
 					edit.mutate({ name: spaceTitle ?? null, description: spaceSubtitle ?? null });
 					console.log('blur. set subtitle to', spaceSubtitle);
 				}}
-				width={spaceSubtitle.length * 6}
+				width={spaceSubtitle.length * 8}
 			/>
 		</SpaceHeaderRow>
 	);

@@ -14,8 +14,10 @@ const FileWrapper = styled.div<{ selected?: boolean }>`
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
+	// width: 100%;
+	margin-right: 8px;
 	align-items: center;
-	padding: 9.85892px 6px;
+	padding: 9.85892px 6px 9.85892px 12px;
 	gap: 8.22px;
 	border-radius: 8px;
 	background: ${({ selected, theme }) =>
@@ -207,14 +209,17 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 				filesStore.selectedFile = file;
 			}}
 		>
-			<RowFlat style={{ gap: '4px' }}>
+			<RowFlat style={{ gap: '4px', width: '100%' }}>
 				<ItemTitle>{file.name}</ItemTitle>
 				<ItemSubtitle>{file.file_with_tasks.extension.replace('.', '').toUpperCase()}</ItemSubtitle>
 			</RowFlat>
-			<div></div>
-			<RowBetween>
+			{/* <div style={{ flex: 1, flexGrow: 1, background: 'red', width: '100%', height: '5px' }}></div> */}
+			<FileStatusIndicatorRow status={status} />
+
+			{/* <RowBetween>
 				{status === FileStatus.Uploaded && isDev && (
 					<SectionButton
+						text="Learn"
 						onClick={() => {
 							learnFile.mutate({ file_id: file.id.toString() });
 							console.log('learnFile', file.id.toString());
@@ -223,8 +228,7 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 						Learn
 					</SectionButton>
 				)}
-				<FileStatusIndicatorRow status={status} />
-			</RowBetween>
+			</RowBetween> */}
 		</FileWrapper>
 	);
 };

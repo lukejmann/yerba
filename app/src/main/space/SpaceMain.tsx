@@ -8,6 +8,7 @@ import { ContentPanel, ContentPanelGroup, ContentPanelResizeHandle } from '../us
 import SpacesList from '../user/SpacesList';
 import { useSpacesContext } from '../user/SpacesProvider';
 import SpaceHeader from './SpaceHeader/SpaceHeader';
+import Chat from './chat';
 import Files from './files';
 import Preview from './preview';
 
@@ -82,7 +83,7 @@ export default () => {
 				</ContentPanel>
 				<ContentPanelResizeHandle direction="horizontal" />
 				<ContentPanel minSize={15} defaultSize={70}>
-					<SectionHeader>Chat</SectionHeader>
+					<Chat />
 				</ContentPanel>
 			</ContentPanelGroup>
 		</SpaceContainer>
