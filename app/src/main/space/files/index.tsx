@@ -23,7 +23,8 @@ const FileWrapper = styled.div<{ selected?: boolean }>`
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	// width: 100%;
+	max-width: 100%;
+	overflow: hidden;
 	margin-right: 8px;
 	align-items: center;
 	padding: 9.85892px 6px 9.85892px 12px;

@@ -13,14 +13,14 @@ const FloatingBarContainer = styled(animated.div)<{ align: 'top' | 'bottom' }>`
 	position: absolute;
 	// width: calc(100%);
 	// height: fit-content;
-	left: 6px;
-	right: 6px;
-	${({ align }) => `${align}: 6px;`}
+	left: 0px;
+	right: 0px;
+	${({ align }) => `${align}: 0px;`}
 	// background: ${({ align }) => (align === 'top' ? 'yellow' : 'orange')};
 
 	z-index: ${({ align }) => (align === 'top' ? '101' : '100')};
 
-	padding: 8px 8px 8px 8px;
+	padding: 12px 8px;
 
 	border-radius: 8px;
 
@@ -40,9 +40,12 @@ export const FloatingBar = React.forwardRef<HTMLDivElement, FloatingBarProps>(fu
 ) {
 	const styles = useSpring({
 		border: float ? '1px solid #e6e6e6' : '1px solid #e6e6e600',
-		boxShadow: float ? '-39px 30px 90px rgba(0, 0, 0, 0.1)' : 'none',
-		backdropFilter: float ? 'blur(7px)' : 'blur(0.1px)',
-		backgroundColor: float ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0)',
+		boxShadow: float
+			? '0px 10px 30px -5px rgba(0, 0, 0, 0.3)'
+			: '0px 10px 30px -5px rgba(0, 0, 0, 0.01)',
+		// backdropFilter: float ? 'blur(7px)' : 'blur(0.1px)',
+		backgroundColor: float ? 'rgba(255, 255, 255, 0.88)' : 'rgba(255, 255, 255, 0.025)',
+		backdropFilter: float ? 'blur(200px)' : 'blur(0.1px)',
 
 		config: {
 			tension: 300
@@ -65,6 +68,7 @@ const FloatingBarScrollContainer = styled(animated.div)`
 	align-items: center;
 	gap: 0px;
 	overflow: visible;
+	// margin: 10px;
 `;
 
 const FloatingBarScrollContent = styled(animated.div)`
@@ -89,7 +93,16 @@ const FloatingBarScrollContent = styled(animated.div)`
 		display: none;
 	}
 
-	padding: 12px 8px;
+	padding: 12px 28px;
+	margin: 0px -20px;
+`;
+
+const FloatingBarTotalWrapper = styled(animated.div)`
+	width: 100%;
+	height: 100%;
+	border-radius: 8px;
+	margin: 0 -0px;
+	padding: 0 0px;
 `;
 
 interface FloatingBarWithContentProps {
@@ -123,20 +136,24 @@ export default function FloatingBarWithContent({
 		root: scrollContainerRef,
 		rootMargin: '10px 0px -10px 0px'
 	});
-
-	const styles = useSpring({ paddingTop: topHeight + 8, paddingBottom: bottomHeight + 8 });
 	const theme = useTheme();
 
+	const scrollStyles = useSpring({ paddingTop: topHeight + 0, paddingBottom: bottomHeight + 0 });
+
+	const wrapperStyles = useSpring({
+		// boxShadow:
+		// 	(bottomBarContent && !bottomItemInView) || !topItemInView
+		// 		? '0 0 0 1pt #00000011'
+		// 		: '0 0 0 1pt #e6e6e600'
+		// outlineOffset: '-16px',
+		// outlineRadius: '8px'
+	});
+
 	return (
-		<div
+		<FloatingBarTotalWrapper
 			style={{
-				width: '100%',
-				height: '100%',
-				overflow: 'hidden',
-				border: border ? border : `none`,
-				borderRadius: '8px',
-				backgroundColor: ''
 				// padding: '8px'
+				...wrapperStyles
 			}}
 		>
 			<FloatingBarScrollContainer style={{ background: '' }} ref={panelRef} {...props}>
@@ -146,7 +163,7 @@ export default function FloatingBarWithContent({
 					float={!topItemInView}
 					align={'top'}
 				></FloatingBar>
-				<FloatingBarScrollContent ref={scrollContainerRef} style={styles}>
+				<FloatingBarScrollContent ref={scrollContainerRef} style={scrollStyles}>
 					{scrollContent?.map((item, index) => (
 						<animated.div
 							key={index}
@@ -171,6 +188,6 @@ export default function FloatingBarWithContent({
 					></FloatingBar>
 				)}
 			</FloatingBarScrollContainer>
-		</div>
+		</FloatingBarTotalWrapper>
 	);
 }

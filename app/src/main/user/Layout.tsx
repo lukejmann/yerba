@@ -36,6 +36,8 @@ export const ContentPanelResizeHandleWrapper = styled(animated(PanelResizeHandle
 			width: 100%;
 			height: 12px;
 		`}
+
+	z-index: 1000;
 `;
 
 export const ContentPanelResizeHandleBar = styled(animated.div)<{

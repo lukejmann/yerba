@@ -54,7 +54,7 @@ const chatStore = proxy({
 	// start with 100 random messages
 	messages: Array.from({ length: 100 }, (_, i) => ({
 		text: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-		align: i % 2 === 0 ? 'left' : 'right'
+		align: i % 2 === 0 ? 'left' : ('right' as 'left' | 'right')
 	}))
 });
 
@@ -80,11 +80,13 @@ export default () => {
 				</RowBetween>
 			}
 			scrollContent={messages.map((message, index) => (
-				<ChatMessageContainer align={message.align} key={index}>
-					<ChatMessageText index={index} align={message.align}>
-						{message.text}
-					</ChatMessageText>
-				</ChatMessageContainer>
+				<ChatMessageRow align={message.align} key={index}>
+					<ChatMessageContainer align={message.align} key={index}>
+						<ChatMessageText index={index} align={message.align}>
+							{message.text}
+						</ChatMessageText>
+					</ChatMessageContainer>
+				</ChatMessageRow>
 			))}
 			bottomBarContent={<ChatInputBar onSend={addMessage} />}
 		/>
@@ -103,6 +105,16 @@ const ChatMessageText = styled.div<{ align: 'left' | 'right'; index: number }>`
 	color: ${({ theme, align }) =>
 		align === 'left' ? theme.otherMessageColor : theme.userMessageColor};
 	z-index: ${({ index }) => index};
+	font-size: 11px;
+`;
+
+const ChatMessageRow = styled.div<{ align: 'left' | 'right' }>`
+	display: flex;
+	width: 100%;
+	// background: blue;
+	align-items: ${({ align }) => (align === 'left' ? 'flex-start' : 'flex-end')};
+
+	flex-direction: column;
 `;
 
 const ChatMessageContainer = styled.div<{ align: 'left' | 'right' }>`
@@ -119,8 +131,9 @@ const ChatMessageContainer = styled.div<{ align: 'left' | 'right' }>`
 	border: 1.072px solid var(--a, #e6e6e6);
 	background: ${({ theme, align }) =>
 		align === 'left' ? theme.otherMessageBackground : theme.userMessageBackground};
-	box-shadow: -39px 30px 90px 0px rgba(0, 0, 0, 0.1);
-	// backdrop-filter: blur(7px);
+	box-shadow: ${({ align }) => (align == 'left' ? '-' : '')}13px 10px 30px 0px rgba(0, 0, 0, 0.1);
+	margin: 10px;
+	padding: 1px -1.5px;
 `;
 
 const ChatInputBarContainer = styled.div`
