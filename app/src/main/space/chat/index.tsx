@@ -51,7 +51,7 @@ export default () => {
 				</RowBetween>
 			}
 			scrollContent={[<></>]}
-			extraContent={[<ChatInputBar />]}
+			// extraContent={[<ChatInputBar />]}
 		/>
 	);
 };

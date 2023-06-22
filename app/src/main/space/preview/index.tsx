@@ -59,8 +59,6 @@ export const Viewer = memo(
 				  )}`
 				: null;
 
-		console.log('serverOrigin in preview', serverOrigin);
-
 		const href = !src || src === '#' ? null : src;
 
 		const link = useMemo(() => {
@@ -98,13 +96,19 @@ export const Viewer = memo(
 			return () => link.remove();
 		}, [link]);
 
+		const extLower = ext?.toLowerCase();
+
 		return link ? (
-			ext == 'pdf' ? (
+			extLower == 'pdf' ? (
 				<iframe src={link.href} style={{ objectFit: 'fill', width: '100%', height: '100%' }} />
-			) : ext == 'jpg' || ext == 'png' ? (
-				<img src={link.href} style={{ objectFit: 'unset', width: '100%' }} />
-			) : ext == 'mp4' ? (
-				<video src={link.href} style={{ objectFit: 'unset', width: '100%' }} />
+			) : extLower == 'jpg' || extLower == 'png' || extLower == 'gif' ? (
+				// preserve aspect ratio
+				<img
+					src={src}
+					style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
+				/>
+			) : extLower == 'mp4' ? (
+				<video src={src} style={{ width: '100%', height: '100%' }} />
 			) : (
 				<></>
 			)

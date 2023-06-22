@@ -59,6 +59,10 @@ const subscribeMapKey = <K extends unknown, V extends unknown>(
 export default () => {
 	const { space, spaces, currentSpaceId } = useSpacesContext();
 
+	useEffect(() => {
+		filesStore.selectedFile = null;
+	}, [currentSpaceId]);
+
 	const { data: files } = useSpaceQuery(['files.list']);
 	useEffect(() => {
 		if (!files) return;
