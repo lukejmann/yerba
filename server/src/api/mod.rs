@@ -59,7 +59,7 @@ pub(crate) fn mount() -> Arc<Router> {
 mod tests {
 
     #[test]
-    fn test_and_export_rspc_bindings() {
+    fn gen_rspc_bindings() {
         super::mount();
     }
 }

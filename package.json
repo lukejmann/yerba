@@ -1,13 +1,12 @@
 {
 	"private": true,
 	"scripts": {
-		"gen": "pnpm gen:prisma && pnpm codegen",
-		"gen:prisma": "cd server && cargo prisma generate",
+		"gen": "pnpm prisma generate && pnpm codegen",
 		"build": "turbo run build",
-		"codegen": "cargo test -p server api::tests::test_and_export_rspc_bindings -- --exact",
+		"codegen": "cargo test -p server api::tests::gen_rspc_bindings -- --exact",
 		"app": "pnpm --filter app -- ",
 		"server": "pnpm --filter server -- ",
-		"prisma": "cd server && cargo prisma",
+		"prisma": "cd server && cargo run -p prisma-cli --bin prisma --",
 		"dev": "turbo run dev --filter app --filter server"
 	},
 	"devDependencies": {
