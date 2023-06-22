@@ -14,7 +14,7 @@ use crate::{api::Ctx, space::Space};
 /// Can wrap a query argument to require it to contain a `space_id` and provide helpers for working with spaces.
 #[derive(Clone, Serialize, Deserialize, Type)]
 pub(crate) struct SpaceArgs<T> {
-    jwt_token: String,
+    jwt: String,
     space_id: Uuid,
     arg: T,
 }
@@ -27,23 +27,19 @@ impl MwArgMapper for SpaceArgsLike {
     fn map<T: Serialize + DeserializeOwned + Type + 'static>(
         arg: Self::Input<T>,
     ) -> (T, Self::State) {
-        (arg.arg, (arg.jwt_token, arg.space_id))
+        (arg.arg, (arg.jwt, arg.space_id))
     }
 }
 
 pub(crate) fn space() -> impl MwV3<Ctx, NewCtx = (Ctx, Space)> {
     MwArgMapperMiddleware::<SpaceArgsLike>::new().mount(
-        |mw, ctx: Ctx, (jwt_token, space_id)| async move {
-            let user = ctx
-                .user_manager
-                .user_from_jwt_token(jwt_token)
-                .await
-                .ok_or_else(|| {
-                    rspc::Error::new(
-                        ErrorCode::BadRequest,
-                        "You must specify a valid user to use this operation.".to_string(),
-                    )
-                })?;
+        |mw, ctx: Ctx, (jwt, space_id)| async move {
+            let user = ctx.user_manager.user_from_jwt(jwt).await.ok_or_else(|| {
+                rspc::Error::new(
+                    ErrorCode::BadRequest,
+                    "You must specify a valid user to use this operation.".to_string(),
+                )
+            })?;
             let space = ctx.space_manager.get_space(space_id).await.ok_or_else(|| {
                 rspc::Error::new(
                     ErrorCode::BadRequest,

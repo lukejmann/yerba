@@ -13,7 +13,7 @@ use crate::{api::Ctx, user::User};
 /// Can wrap a query argument to require it to contain a `user_id` and provide helpers for working with users.
 #[derive(Clone, Serialize, Deserialize, Type)]
 pub(crate) struct UserArgs<T> {
-    jwt_token: String,
+    jwt: String,
     arg: T,
 }
 
@@ -25,22 +25,18 @@ impl MwArgMapper for UserArgsLike {
     fn map<T: Serialize + DeserializeOwned + Type + 'static>(
         arg: Self::Input<T>,
     ) -> (T, Self::State) {
-        (arg.arg, arg.jwt_token)
+        (arg.arg, arg.jwt)
     }
 }
 
 pub(crate) fn user() -> impl MwV3<Ctx, NewCtx = (Ctx, User)> {
-    MwArgMapperMiddleware::<UserArgsLike>::new().mount(|mw, ctx: Ctx, jwt_token| async move {
-        let user = ctx
-            .user_manager
-            .user_from_jwt_token(jwt_token)
-            .await
-            .ok_or_else(|| {
-                rspc::Error::new(
-                    ErrorCode::BadRequest,
-                    "You must specify a valid user to use this operation.".to_string(),
-                )
-            })?;
+    MwArgMapperMiddleware::<UserArgsLike>::new().mount(|mw, ctx: Ctx, jwt| async move {
+        let user = ctx.user_manager.user_from_jwt(jwt).await.ok_or_else(|| {
+            rspc::Error::new(
+                ErrorCode::BadRequest,
+                "You must specify a valid user to use this operation.".to_string(),
+            )
+        })?;
 
         Ok(mw.next((ctx, user)))
     })

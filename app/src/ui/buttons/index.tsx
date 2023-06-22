@@ -53,9 +53,15 @@ interface SectionButtonProps extends PropsWithChildren {
 	disabled?: boolean;
 }
 
-export default function SectionButton({ text, onClick, disabled, children }: SectionButtonProps) {
+export default function SectionButton({
+	text,
+	onClick,
+	disabled,
+	children,
+	...props
+}: SectionButtonProps) {
 	return (
-		<ButtonBase onClick={onClick ? onClick : undefined} disabled={disabled}>
+		<ButtonBase onClick={onClick ? onClick : undefined} disabled={disabled} {...props}>
 			<ButtonTextBase>{text}</ButtonTextBase>
 			{children && (
 				<div

@@ -38,7 +38,7 @@ export type Meta = { id: number[]; name: string; description: string; color: str
 /**
  * Can wrap a query argument to require it to contain a `space_id` and provide helpers for working with spaces.
  */
-export type SpaceArgs<T> = { jwt_token: string; space_id: string; arg: T }
+export type SpaceArgs<T> = { jwt: string; space_id: string; arg: T }
 
 export type SpaceWrapped = { id: string; meta: Meta }
 
@@ -49,6 +49,6 @@ export type User = { id: number[]; account_attached: boolean }
 /**
  * Can wrap a query argument to require it to contain a `user_id` and provide helpers for working with users.
  */
-export type UserArgs<T> = { jwt_token: string; arg: T }
+export type UserArgs<T> = { jwt: string; arg: T }
 
 export type UserWithToken = { user: User; token: string }

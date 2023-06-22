@@ -11,5 +11,6 @@ export const lightTheme = {
 	buttonBackgroundBase: '##FFFFFF',
 	border1: '##E6E6E6',
 	backgroundFloatingNone: '#rgba(100, 100, 100, 1.00)',
-	backgroundFloatingBase: '#rgba(255, 255, 255, 1.02)'
+	backgroundFloatingBase: '#rgba(255, 255, 255, 1.02)',
+	backgroundOverlay: '#rgba(255, 255, 255, 0.2)'
 };

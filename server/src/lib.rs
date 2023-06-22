@@ -132,7 +132,7 @@ impl Node {
 
     pub async fn handle_file_upload(
         &self,
-        jwt_token: String,
+        jwt: String,
         space_id: String,
         path: String,
         bytes: &Bytes,
@@ -140,7 +140,7 @@ impl Node {
         let space_id_uuid = Uuid::parse_str(&space_id)?;
         let user = self
             .user_manager
-            .user_from_jwt_token(jwt_token)
+            .user_from_jwt(jwt)
             .await
             .with_context(|| "failed to parse jwt token")?;
 

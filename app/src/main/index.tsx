@@ -6,7 +6,7 @@ import { useSnapshot } from 'valtio';
 // @ts-ignore
 import Bg from '~/assets/bg';
 import { useInvalidateQuery } from '~/rspc';
-import { ThemeProvider, ThemedGlobalStyle } from '~/ui';
+import { Modals, ThemeProvider, ThemedGlobalStyle } from '~/ui';
 import { persistKey } from '../rspc/useAppContent';
 import ErrorFallback, { RouterErrorBoundary } from '../util/ErrorFallback';
 import topRoutes from './top';
@@ -32,11 +32,8 @@ const Wrapper = () => {
 
 	return (
 		<>
-			<ThemeProvider>
-				<ThemedGlobalStyle />
-				<Outlet />
-				<BG />
-			</ThemeProvider>
+			<Outlet />
+			<BG />
 		</>
 	);
 };
@@ -99,7 +96,11 @@ export const YerbInterface = (props: { router: RouterProviderProps['router'] }) 
 		<ErrorBoundary FallbackComponent={ErrorFallback}>
 			<Devtools />
 			{/* <SpacedropUI /> */}
-			<RouterProvider router={props.router} />
+			<ThemeProvider>
+				<ThemedGlobalStyle />
+				<RouterProvider router={props.router} />
+				<Modals />
+			</ThemeProvider>
 		</ErrorBoundary>
 	);
 };

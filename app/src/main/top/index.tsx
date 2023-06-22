@@ -1,10 +1,10 @@
 import { Navigate, Outlet, RouteObject } from 'react-router-dom';
-import { authStore, useCachedSpaces } from '~/rspc';
+import { authStore, useSpaces } from '~/rspc';
 import userRoutes from '../user';
 
 const Index = () => {
 	console.log('rendering index');
-	const spaces = useCachedSpaces();
+	const spaces = useSpaces();
 
 	const { jwt } = authStore;
 

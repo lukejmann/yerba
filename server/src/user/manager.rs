@@ -173,7 +173,7 @@ impl UserManager {
             .map(Clone::clone)
     }
 
-    pub async fn user_from_jwt_token(&self, token: String) -> Option<User> {
+    pub async fn user_from_jwt(&self, token: String) -> Option<User> {
         let decoded: Result<TokenData<Claims>, jsonwebtoken::errors::Error> = jsonwebtoken::decode(
             &token,
             &jsonwebtoken::DecodingKey::from_secret(SECRET),

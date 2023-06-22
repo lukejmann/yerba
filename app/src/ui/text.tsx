@@ -1,16 +1,12 @@
-/**
- * Preset styles of the Rebass Text component
- */
-import { Text, TextProps as TextPropsOriginal } from 'rebass';
 import styled from 'styled-components/macro';
 
-const TextBase = styled.div`
+export const TextBase = styled.div`
 	font-size: 11px;
 	letter-spacing: -0.01em;
 	font-weight: 550;
 `;
 
-const SubtextBase = styled.div`
+export const SubtextBase = styled.div`
 	font-size: 11px;
 	letter-spacing: -0.005em;
 	font-weight: 450;
@@ -46,4 +42,8 @@ export const ItemStatus = styled(SubtextBase)`
 	letter-spacing: -0.005em;
 
 	color: ${({ theme }) => theme.text2};
+`;
+
+export const FormText = styled(TextBase)`
+	color: ${({ theme }) => theme.text1};
 `;

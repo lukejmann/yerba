@@ -20,14 +20,12 @@ export const Component = () => {
 	const [firstSpaceStatus, setFirstSpaceStatus] = useState('Creating your space...');
 
 	const createUserMut = useBridgeMutation('users.create', {
-		// retry: false,
 		onSuccess: (auth) => {
 			setAuth(auth.token);
 			setUserStatus('Done!');
 		},
 		onError: () => {
 			console.error('Failed to create user');
-			// navigate('/onboarding/');
 		}
 	});
 

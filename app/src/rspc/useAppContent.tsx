@@ -17,11 +17,13 @@ export const authStore = persistKey('auth-26', {
 export interface AppContext {
 	jwt: string | null;
 	currentSpaceId: string | null;
-	spaces: ReturnType<typeof useCachedSpaces>;
+	spaces: ReturnType<typeof useSpaces>;
 	space: SpaceWrapped | null | undefined;
+	account: Account | null | undefined;
 }
 
-export const useCachedSpaces = () => useUserQuery(['spaces.list'], {});
+export const useSpaces = () => useUserQuery(['spaces.list'], {});
+export const useAccount = () => useUserQuery(['users.getAccount'], {});
 
 const AppContext = createContext<AppContext>(null!);
 
@@ -30,8 +32,9 @@ interface AppContextProviderProps extends PropsWithChildren {
 }
 
 export const AppContextProvider = ({ children, currentSpaceId }: AppContextProviderProps) => {
-	const spaces = useCachedSpaces();
 	const { jwt } = useSnapshot(authStore);
+	const account = useAccount();
+	const spaces = useSpaces();
 
 	console.log('jwt', jwt);
 
@@ -42,7 +45,7 @@ export const AppContextProvider = ({ children, currentSpaceId }: AppContextProvi
 	currentSpaceCache.id = currentSpaceId;
 
 	return (
-		<AppContext.Provider value={{ currentSpaceId, spaces, space, jwt }}>
+		<AppContext.Provider value={{ currentSpaceId, spaces, space, jwt, account }}>
 			{children}
 		</AppContext.Provider>
 	);

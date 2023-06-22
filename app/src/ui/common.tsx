@@ -49,12 +49,12 @@ export const ButtonText = styled.button`
 	margin: 0;
 	background: none;
 	cursor: pointer;
-	transition-duration: ${({ theme }) => theme.transition.duration.fast};
+	// transition-duration: ${({ theme }) => theme.transition.duration.fast};
 	transition-timing-function: ease-in-out;
 	transition-property: opacity, color, background-color;
 
 	:hover {
-		opacity: ${({ theme }) => theme.opacity.hover};
+		// opacity: ${({ theme }) => theme.opacity.hover};
 	}
 
 	:focus {

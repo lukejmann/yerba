@@ -53,11 +53,11 @@ export const useUploader = () => {
 
 		let i = 0;
 
-		formData.append('jwt_token', jwt);
+		formData.append('jwt', jwt);
 		formData.append('space_uuid', spaceId);
 
 		console.log('space_uuid', spaceId);
-		console.log('jwt_token', jwt);
+		console.log('jwt', jwt);
 
 		for (let n = 0; n < files.length; n++) {
 			console.log('files[n].name', files[n]);
@@ -86,7 +86,7 @@ export const useUploader = () => {
 			method: 'POST',
 			body: formData,
 			headers: {
-				jwt_token: jwt,
+				jwt: jwt,
 				space_uuid: spaceId
 			}
 		});
