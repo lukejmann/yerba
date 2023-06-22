@@ -1,14 +1,12 @@
-import { memo, useLayoutEffect, useMemo, useRef } from 'react';
-import styled from 'styled-components/macro';
-import { proxy, useSnapshot } from 'valtio';
+import { memo, useLayoutEffect, useMemo } from 'react';
+import { useSnapshot } from 'valtio';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
-import { useSpaceQuery } from '~/rspc';
-import { ItemSubtitle, ItemTitle, RowBetween, RowFixed, RowFlat, SectionHeader } from '~/ui';
+import { ItemSubtitle, RowFixed, SectionHeader } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import { filesStore } from '../files';
 
-console.log('serverOrigin in preview', serverOrigin);
-console.log('import.meta.env.SERVER_BASE in preview', import.meta.env.SERVER_BASE);
+// console.log('serverOrigin in preview', serverOrigin);
+// console.log('import.meta.env.VITE_SERVER_BASE in preview', import.meta.env.VITE_SERVER_BASE);
 
 export default () => {
 	const { selectedFile } = useSnapshot(filesStore);

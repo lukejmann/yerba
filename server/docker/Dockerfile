@@ -48,8 +48,8 @@ RUN rm -rf node_modules
 RUN pnpm install --frozen-lockfile
 RUN pnpm app build
 
-RUN --mount=type=cache,target=/root/.cache/prisma/binaries/cli/ \
-	pnpm gen
+# RUN --mount=type=cache,target=/root/.cache/prisma/binaries/cli/ \
+RUN	pnpm gen
 
 # RUN cargo build --release -p server
 RUN cargo build -p server

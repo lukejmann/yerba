@@ -20,7 +20,7 @@ SPACES_DIR = "/data/1/spaces"
 LOG_LEVEL = "info"
 NODE_ENV = "production"
 PORT = "8080"
-SERVER_BASE = "https://yerba-dev.fly.dev"
+VITE_SERVER_BASE = "yerba-dev.fly.dev"
 
 [mounts]
 source = "yerbadev"

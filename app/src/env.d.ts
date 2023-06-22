@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-	readonly SERVER_BASE: string;
+	readonly VITE_SERVER_BASE: string;
 }
 
 interface ImportMeta {
