@@ -220,7 +220,7 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 			{/* <div style={{ flex: 1, flexGrow: 1, background: 'red', width: '100%', height: '5px' }}></div> */}
 			<FileStatusIndicatorRow status={status} />
 
-			{/* <RowBetween>
+			<RowBetween>
 				{status === FileStatus.Uploaded && isDev && (
 					<SectionButton
 						text="Learn"
@@ -228,11 +228,9 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 							learnFile.mutate({ file_id: file.id.toString() });
 							console.log('learnFile', file.id.toString());
 						}}
-					>
-						Learn
-					</SectionButton>
+					></SectionButton>
 				)}
-			</RowBetween> */}
+			</RowBetween>
 		</FileWrapper>
 	);
 };

@@ -83,20 +83,6 @@ impl TaskExec for FileUploadTask {
             file_id: file_new_id,
         });
 
-        // TODO: Dislike this update flow. Will refactor
-        let task_data = space
-            .db
-            .task()
-            .find_unique(task::id::equals(u2b(task_id)))
-            .exec()
-            .await
-            .with_context(|| "Failed to find task")?
-            .context("Failed to find task")?;
-
-        space.emit(CoreEvent::TaskUpdate {
-            tasks: vec![task_data],
-        });
-
         Ok(())
     }
 
@@ -156,20 +142,6 @@ impl TaskExec for FileUploadTask {
             }
         }
 
-        // TODO: Dislike this update flow. Will refactor
-        let task_data = space
-            .db
-            .task()
-            .find_unique(task::id::equals(u2b(task_id)))
-            .exec()
-            .await
-            .with_context(|| "Failed to find task")?
-            .context("Failed to find task")?;
-
-        space.emit(CoreEvent::TaskUpdate {
-            tasks: vec![task_data],
-        });
-
         Ok(())
     }
     async fn finish(
@@ -181,21 +153,6 @@ impl TaskExec for FileUploadTask {
         info!("upload_file::finish");
         invalidate_query!(space, "files.list");
 
-        // TODO: Dislike this update flow. Will refactor
-        let task_data = space
-            .db
-            .task()
-            .find_unique(task::id::equals(u2b(task_id)))
-            .exec()
-            .await
-            .with_context(|| "Failed to find task")?
-            .context("Failed to find task")?;
-
-        debug!("Task data: {:?}", task_data);
-
-        space.emit(CoreEvent::TaskUpdate {
-            tasks: vec![task_data],
-        });
         Ok(())
     }
 }

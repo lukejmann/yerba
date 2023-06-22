@@ -5,5 +5,9 @@
 	"rust-analyzer.procMacro.enable": true,
 	"rust-analyzer.diagnostics.experimental.enable": false,
 	"eslint.workingDirectories": ["app", "server"],
-	"eslint.packageManager": "pnpm"
+	"eslint.packageManager": "pnpm",
+	"[python]": {
+		"editor.defaultFormatter": "ms-python.black-formatter"
+	},
+	"python.formatting.provider": "none"
 }

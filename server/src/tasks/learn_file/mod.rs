@@ -2,14 +2,18 @@ use crate::get_spaces_dir;
 use crate::utils::u2b;
 use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::hash::{Hash, Hasher};
+use std::vec;
 
 use custom_prisma::prisma::{file, space as db_space, task};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
 use anyhow::bail;
 use anyhow::{Context, Result};
+use axum;
 use std::fs::metadata;
+
 use std::time::{Duration, Instant};
 use tracing::{debug, info};
 
@@ -34,9 +38,18 @@ impl TaskInfo for LearnFileTaskInfo {
     type Task = LearnFileTask;
 }
 
+const VECTOR_DB_PATH: &str = "vector_db";
+const LEARN_URL: &str = "http://localhost:5001/learn";
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct LearnRequest {
+    vector_db_path: String,
+    file_path: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LearnFileTaskState {
-    relative_path: String,
+    file_rel_path: String,
 }
 
 #[async_trait::async_trait]
@@ -59,38 +72,16 @@ impl TaskExec for LearnFileTask {
         let Space { .. } = space;
         let info = task_info.info.clone();
 
-        // let file_new_id = Uuid::new_v4();
-        // let mut name = info.path.split('/').last().unwrap();
-        // let extension = name.split('.').last().unwrap();
-        // name = name.split('.').next().unwrap();
-
-        let file_data = space
+        let file = space
             .db
             .file()
             .find_unique(file::id::equals(u2b(info.file_id)))
             .exec()
-            .await
-            .with_context(|| format!("Failed to find file with id: {}", info.file_id))?;
-        let file_data = file_data.context("Failed to find file")?;
-
-        debug!("Created file: {:?}", file_data);
-
+            .await?;
+        let file = file.context("Failed to find file")?;
+        let file_path = file.path.clone();
         task_info.data = Some(LearnFileTaskState {
-            relative_path: file_data.path,
-        });
-
-        // TODO: Dislike this update flow. Will refactor
-        let task_data = space
-            .db
-            .task()
-            .find_unique(task::id::equals(u2b(task_id)))
-            .exec()
-            .await
-            .with_context(|| "Failed to find task")?
-            .context("Failed to find task")?;
-
-        space.emit(CoreEvent::TaskUpdate {
-            tasks: vec![task_data],
+            file_rel_path: file_path,
         });
 
         Ok(())
@@ -108,27 +99,36 @@ impl TaskExec for LearnFileTask {
             .data
             .as_mut()
             .context("Failed to get upload task data")?;
-        let file_path = data.relative_path.clone();
+        let file_path = data.file_rel_path.clone();
 
-        // call python
         let space_base_path = get_spaces_dir().await;
         let space_path = space_base_path.join(space.id.to_string());
 
-        // TODO: implement
+        let vector_db_path = space_path.join(VECTOR_DB_PATH);
+        let file_path = space_path.join(file_path);
+        // create if not exists
+        if !vector_db_path.exists() {
+            std::fs::create_dir(&vector_db_path)?;
+        }
 
-        // TODO: Dislike this update flow. Will refactor
-        let task_data = space
-            .db
-            .task()
-            .find_unique(task::id::equals(u2b(task_id)))
-            .exec()
+        let learn_request = LearnRequest {
+            vector_db_path: vector_db_path.to_string_lossy().into_owned(),
+            file_path: file_path.to_string_lossy().into_owned(),
+        };
+
+        debug!("Sending learn request: {:?}", learn_request);
+
+        let client = Client::new();
+        let res = client
+            .post(LEARN_URL)
+            .json(&learn_request)
+            .send()
             .await
-            .with_context(|| "Failed to find task")?
-            .context("Failed to find task")?;
+            .context("Failed to send learn request")?;
 
-        space.emit(CoreEvent::TaskUpdate {
-            tasks: vec![task_data],
-        });
+        if !res.status().is_success() {
+            bail!("Failed to learn file");
+        }
 
         Ok(())
     }
@@ -141,21 +141,6 @@ impl TaskExec for LearnFileTask {
         info!("learn_file::finish");
         invalidate_query!(space, "files.list");
 
-        // TODO: Dislike this update flow. Will refactor
-        let task_data = space
-            .db
-            .task()
-            .find_unique(task::id::equals(u2b(task_id)))
-            .exec()
-            .await
-            .with_context(|| "Failed to find task")?
-            .context("Failed to find task")?;
-
-        debug!("Task data: {:?}", task_data);
-
-        space.emit(CoreEvent::TaskUpdate {
-            tasks: vec![task_data],
-        });
         Ok(())
     }
 }

@@ -3608,6 +3608,7 @@ dependencies = [
  "notify",
  "once_cell",
  "prisma-client-rust",
+ "reqwest",
  "rmp",
  "rmp-serde",
  "rspc",

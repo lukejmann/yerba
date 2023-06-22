@@ -1,4 +1,4 @@
-use crate::{space::Space, utils::u2b};
+use crate::{api::CoreEvent, space::Space, utils::u2b};
 use std::{
     collections::{hash_map::DefaultHasher, VecDeque},
     hash::{Hash, Hasher},
@@ -200,16 +200,40 @@ impl<T: TaskExec> DTask for Task<T> {
             .setup(space, self.id, &mut self.task_info)
             .await?;
 
+        let task_data = space
+            .db
+            .task()
+            .find_unique(task::id::equals(u2b(self.id)))
+            .exec()
+            .await
+            .with_context(|| "Failed to find task")?
+            .context("Failed to find task")?;
+
+        space.emit(CoreEvent::TaskUpdate {
+            tasks: vec![task_data],
+        });
+
         debug!("Setup task in wrapper{}", self_id);
 
         Ok(())
     }
 
     async fn run(&mut self, space: &Space, _dispatcher: Arc<Dispatcher>) -> Result<()> {
-        let _res = self
-            .task_with_state
+        self.task_with_state
             .run(space, self.id, &mut self.task_info)
             .await?;
+        let task_data = space
+            .db
+            .task()
+            .find_unique(task::id::equals(u2b(self.id)))
+            .exec()
+            .await
+            .with_context(|| "Failed to find task")?
+            .context("Failed to find task")?;
+
+        space.emit(CoreEvent::TaskUpdate {
+            tasks: vec![task_data],
+        });
         Ok(())
     }
 
@@ -219,11 +243,10 @@ impl<T: TaskExec> DTask for Task<T> {
         _dispatcher: Arc<Dispatcher>,
         task_status: i32,
     ) -> Result<()> {
-        let _res = self
-            .task_with_state
+        self.task_with_state
             .finish(space, self.id, &mut self.task_info)
             .await?;
-        let _r = space
+        let task_data = space
             .db
             .task()
             .update(
@@ -238,6 +261,9 @@ impl<T: TaskExec> DTask for Task<T> {
                     task_status, self.id
                 )
             })?;
+        space.emit(CoreEvent::TaskUpdate {
+            tasks: vec![task_data],
+        });
 
         Ok(())
     }
