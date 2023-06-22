@@ -1,7 +1,5 @@
-import { RefObject, createContext, useContext, useRef } from 'react';
-import { Navigate, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
 import styled from 'styled-components/macro';
-import { authStore, currentSpaceCache, useCachedSpaces, useInvalidateQuery } from '~/rspc';
 import TopBar from './TopBar';
 import { AuthUpdater } from './auth/auth-updater';
 

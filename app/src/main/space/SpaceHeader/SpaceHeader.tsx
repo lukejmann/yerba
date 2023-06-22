@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styled, { useTheme } from 'styled-components/macro';
-import { useAppContext, useSpaceMutation } from '~/rspc';
+import { useSpacesContext } from '~/main/user/SpacesProvider';
+import { useSpaceMutation } from '~/rspc';
 import { RowFixed, SpaceSubtitle, SpaceTitle } from '~/ui';
 
 const SpaceHeaderRow = styled.div`
@@ -30,7 +31,7 @@ const Input = styled.input<{ width: number }>`
 `;
 
 export default () => {
-	const { space } = useAppContext();
+	const { space } = useSpacesContext();
 
 	const [spaceTitle, setSpaceTitle] = useState(space?.meta.name ?? '');
 	const [spaceSubtitle, setSpaceSubtitle] = useState(space?.meta.description ?? '');

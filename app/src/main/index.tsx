@@ -7,7 +7,7 @@ import { useSnapshot } from 'valtio';
 import Bg from '~/assets/bg';
 import { useInvalidateQuery } from '~/rspc';
 import { ThemeProvider, ThemedGlobalStyle } from '~/ui';
-import { persistKey } from '../rspc/useAppContent';
+import { persistKey } from '../rspc/authStore';
 import ErrorFallback, { RouterErrorBoundary } from '../util/ErrorFallback';
 import topRoutes from './top';
 

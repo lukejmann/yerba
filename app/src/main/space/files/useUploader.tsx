@@ -1,8 +1,8 @@
-// @ts-nocheck
 import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
 import { http, serverOrigin } from '~/App';
-import { authStore, currentSpaceCache, useSpaceMutation } from '~/rspc';
+import { currentSpaceCache } from '~/main/user/SpacesProvider';
+import { authStore, useSpaceMutation } from '~/rspc';
 
 export const useUploader = () => {
 	const [items, setItems] = useState<DataTransferItemList | null>(null);
@@ -62,6 +62,7 @@ export const useUploader = () => {
 			if (!files[n]?.name) continue;
 			const res = await uploadFile.mutateAsync(
 				{
+					// @ts-ignore
 					path: files[n].name
 				},
 				{
@@ -160,13 +161,17 @@ export const useUploader = () => {
 
 		filesAll.forEach((file) => {
 			const split = file.name.split('/');
+			// @ts-ignore
 			if (split.length > 1 && !rootDirsTemp.includes(split[0])) {
+				// @ts-ignore
 				rootDirsTemp.push(split[0]);
 			} else if (
 				split.length === 1 &&
 				!rootFilesTemp.find((rootFile) => rootFile.name === split[0])
 			) {
+				// @ts-ignore
 				const split2 = split[0].split('.');
+				// @ts-ignore
 				rootFilesTemp.push({ name: split2[0], extension: split2[1] });
 			}
 		});

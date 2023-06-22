@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components/macro';
-import { useAppContext, useUserMutation } from '~/rspc';
+import { useUserMutation } from '~/rspc';
 import { ItemSubtitle, ItemTitle, RowBetween, SectionHeader } from '~/ui';
 import { AutoRow } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import SectionButton from '~/ui/buttons';
+import { useSpacesContext } from './SpacesProvider';
 
 const SpaceWrapper = styled(Link)<{ selected?: boolean }>`
 	text-decoration: none;
@@ -32,7 +33,7 @@ const SpaceWrapper = styled(Link)<{ selected?: boolean }>`
 `;
 
 export default () => {
-	const { spaces, currentSpaceId } = useAppContext();
+	const { spaces, currentSpaceId } = useSpacesContext();
 	console.log('spaces', spaces);
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();

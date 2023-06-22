@@ -1,11 +1,12 @@
 import { Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components/macro';
-import { useAppContext, useUserMutation } from '~/rspc';
+import { useUserMutation } from '~/rspc';
 import { RowBetween, RowFixed, SectionHeader } from '~/ui';
 import SectionButton from '~/ui/buttons';
 import { ContentPanel, ContentPanelGroup, ContentPanelResizeHandle } from '../user/Layout';
 import SpacesList from '../user/SpacesList';
+import { useSpacesContext } from '../user/SpacesProvider';
 import SpaceHeader from './SpaceHeader/SpaceHeader';
 import Files from './files';
 import Preview from './preview';
@@ -40,7 +41,7 @@ const SpaceContainer = styled.div`
 `;
 
 export default () => {
-	const { currentSpaceId, space } = useAppContext();
+	const { currentSpaceId, space } = useSpacesContext();
 	const navigate = useNavigate();
 
 	const deleteSpace = useUserMutation('spaces.delete', {

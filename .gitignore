@@ -13,3 +13,4 @@ target
 mock/
 
 crates/prisma/src/prisma.rs
+app/stats.html

@@ -3,8 +3,9 @@ import { AlphaRSPCError, initRspc } from '@rspc/client/v2';
 import { Context, createReactQueryHooks } from '@rspc/react/v2';
 import { QueryClient } from '@tanstack/react-query';
 import { PropsWithChildren, createContext, useContext } from 'react';
+import { currentSpaceCache } from '~/main/user/SpacesProvider';
+import { authStore } from './authStore';
 import { Procedures, SpaceArgs, UserArgs } from './core';
-import { authStore, currentSpaceCache } from './useAppContent';
 
 type BaseProcedures<T extends keyof Procedures> =
 	| Exclude<Procedures[T], { input: SpaceArgs<any> }>
@@ -83,17 +84,27 @@ const baseHooks = createReactQueryHooks<BaseProceduresDef>(baseClient, {
 	// context // TODO: Shared context
 });
 
+// random uuid as a bandaid for missing spaceId now
+const FAKE_UUID = 'e94e5521-e182-4f32-9888-016a6eb9aa85';
+
 const spaceClient = rspc2.dangerouslyHookIntoInternals<SpaceProceduresDef>({
 	mapQueryKey: (keyAndInput) => {
 		const jwt = authStore.jwt;
 		// console.log('jwt in userClient', jwt);
+		// console.log('space_id', currentSpaceCache.id);
 		if (!jwt) {
 			console.error('Attempted to do space operation with no user set!');
-			return [keyAndInput[0], { jwt_token: 'null', arg: keyAndInput[1] ?? null }];
+			return [
+				keyAndInput[0],
+				{ jwt_token: 'null_jwt', space_id: FAKE_UUID, arg: keyAndInput[1] ?? null }
+			];
 		}
 
 		const spaceId = currentSpaceCache.id;
-		if (spaceId === null) throw new Error('Attempted to do space operation with no space set!');
+		if (spaceId === null) {
+			console.error('Attempted to do space operation with no space set!');
+			return [keyAndInput[0], { jwt_token: jwt, space_id: FAKE_UUID, arg: keyAndInput[1] ?? null }];
+		}
 		return [keyAndInput[0], { jwt_token: jwt, space_id: spaceId, arg: keyAndInput[1] ?? null }];
 	}
 });
@@ -105,10 +116,9 @@ const spaceHooks = createReactQueryHooks<SpaceProceduresDef>(spaceClient, {
 const userClient = rspc3.dangerouslyHookIntoInternals<UserProceduresDef>({
 	mapQueryKey: (keyAndInput) => {
 		const jwt = authStore.jwt;
-		// console.log('jwt in userClient', jwt);
 		if (!jwt) {
 			console.error('Attempted to do user operation with no user set!');
-			return [keyAndInput[0], { jwt_token: 'null', arg: keyAndInput[1] ?? null }];
+			return [keyAndInput[0], { jwt_token: 'null_jwt', arg: keyAndInput[1] ?? null }];
 		}
 		return [keyAndInput[0], { jwt_token: jwt, arg: keyAndInput[1] ?? null }];
 	}

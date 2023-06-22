@@ -1,5 +1,5 @@
 import { Navigate, Outlet, RouteObject } from 'react-router-dom';
-import { authStore, useCachedSpaces } from '~/rspc';
+import { authStore } from '~/rspc';
 import userRoutes from '../user';
 
 export default [

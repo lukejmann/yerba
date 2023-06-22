@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components/macro';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { proxyMap, subscribeKey } from 'valtio/utils';
-import { FileWrapped, Task, useAppContext, useSpaceQuery, useSpaceSubscription } from '~/rspc';
+import { useSpacesContext } from '~/main/user/SpacesProvider';
+import { FileWrapped, Task, useSpaceQuery, useSpaceSubscription } from '~/rspc';
 import { ItemSubtitle, ItemTitle, RowBetween, RowFlat, SectionHeader, opacify } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import { useUploader } from './useUploader';
@@ -50,7 +51,7 @@ const subscribeMapKey = <K extends unknown, V extends unknown>(
 };
 
 export default () => {
-	const { space, spaces, currentSpaceId } = useAppContext();
+	const { space, spaces, currentSpaceId } = useSpacesContext();
 
 	const { data: files } = useSpaceQuery(['files.list']);
 	useEffect(() => {

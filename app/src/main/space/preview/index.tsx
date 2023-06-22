@@ -2,14 +2,15 @@ import { memo, useLayoutEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components/macro';
 import { proxy, useSnapshot } from 'valtio';
 import { http, serverOrigin } from '~/App';
-import { useAppContext, useSpaceQuery } from '~/rspc';
+import { useSpacesContext } from '~/main/user/SpacesProvider';
+import { useSpaceQuery } from '~/rspc';
 import { ItemSubtitle, ItemTitle, RowBetween, RowFixed, RowFlat, SectionHeader } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import { filesStore } from '../files';
 
 export default () => {
 	const { selectedFile } = useSnapshot(filesStore);
-	const { space } = useAppContext();
+	const { space } = useSpacesContext();
 
 	return (
 		<FloatingBarWithContent

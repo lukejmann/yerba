@@ -16,4 +16,4 @@ if (
 
 export * from './rspc';
 export * from './core';
-export * from './useAppContent';
+export * from './authStore';

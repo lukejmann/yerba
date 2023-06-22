@@ -4,6 +4,7 @@ import { authStore, useAuth } from '~/rspc';
 
 export const AuthUpdater = () => {
 	const jwt = useAuth();
+	console.log('AuthUpdater', jwt);
 
 	const navigate = useNavigate();
 

@@ -1,8 +1,9 @@
 import { Outlet, RouteObject } from 'react-router-dom';
 import { z } from 'zod';
 import { useZodRouteParams } from '~/hooks';
-import { AppContextProvider, useInvalidateQuery } from '~/rspc';
+import { useInvalidateQuery } from '~/rspc';
 import spaceRoutes from '../space';
+import { SpacesContextProvider } from './SpacesProvider';
 
 export const SPACE_ID_PARAMS = z.object({
 	spaceId: z.optional(z.string())
@@ -17,9 +18,9 @@ const Wrapper = () => {
 
 	return (
 		<>
-			<AppContextProvider currentSpaceId={params.spaceId ?? null}>
+			<SpacesContextProvider currentSpaceId={params.spaceId ?? null}>
 				<Outlet />
-			</AppContextProvider>
+			</SpacesContextProvider>
 		</>
 	);
 };
