@@ -1,3 +1,4 @@
+use anyhow::{Context, Error, Result};
 use std::sync::Arc;
 
 use super::Node;
@@ -29,17 +30,19 @@ pub fn u2b(uuid: Uuid) -> Vec<u8> {
 }
 
 /// load_and_migrate will load the database from the given path and migrate it to the latest version of the schema.
-pub async fn load_and_migrate(db_url: &str) -> Result<PrismaClient, rspc::Error> {
+pub async fn load_and_migrate(db_url: &str) -> Result<PrismaClient> {
     let client = prisma::new_client_with_url(db_url)
         .await
         .map_err(|e| anyhow::anyhow!("failed to create prisma client: {}", e))?;
 
-    #[cfg(debug_assertions)]
-    {
-        let mut builder = client._db_push();
+    let mut builder = client._db_push();
 
-        let res = builder.await;
-    }
+    builder.await.with_context(|| {
+        format!(
+            "failed to migrate database from {} to latest version",
+            db_url
+        )
+    })?;
 
     Ok(client)
 }

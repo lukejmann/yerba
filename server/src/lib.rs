@@ -52,15 +52,16 @@ pub struct Node {
     dispatcher: Arc<Dispatcher>,
 }
 
-pub async fn get_db() -> Arc<PrismaClient> {
+pub async fn get_db() -> Result<Arc<PrismaClient>> {
     let db_addr = match env::var("DB_ADDR") {
         Ok(path) => path,
         Err(_e) => {
             panic!("'$DB_ADDR' is not set ({})", _e)
         }
     };
-    let db = Arc::new(load_and_migrate(&db_addr).await.unwrap());
-    db
+    let client = load_and_migrate(&db_addr).await?;
+    let db = Arc::new(client);
+    Ok(db)
 }
 
 pub async fn get_spaces_dir() -> PathBuf {
@@ -77,11 +78,11 @@ impl Node {
     pub async fn new(spaces_dir: impl AsRef<Path>) -> Result<(Arc<Node>, Arc<Router>)> {
         let spaces_dir = spaces_dir.as_ref();
 
-        let _ = fs::create_dir_all(&spaces_dir).await;
+        let _ = fs::create_dir_all(&spaces_dir).await?;
 
         let event_bus = broadcast::channel(1024);
 
-        let db = get_db().await;
+        let db = get_db().await?;
         let dispatcher = Dispatcher::new();
 
         let space_manager = SpaceManager::new(NodeContext {
@@ -116,9 +117,7 @@ impl Node {
 
     pub fn init_logger(data_dir: impl AsRef<Path>) {
         let collector = tracing_subscriber::fmt()
-            // filter spans/events with level TRACE or higher.
             .with_max_level(Level::TRACE)
-            // build but do not install the subscriber.
             .finish();
 
         tracing::collect::set_global_default(collector)
@@ -126,8 +125,6 @@ impl Node {
                 println!("Error initializing global logger: {:?}", err);
             })
             .ok();
-
-        // guard
     }
 
     pub async fn handle_file_upload(
@@ -163,8 +160,6 @@ impl Node {
         let res: Result<(), std::io::Error> = file.write_all(bytes).await;
 
         res.with_context(|| "failed to write file")?;
-
-        // can hold off on perfect sync on uploads. just do pull-based in upload_file task
 
         Ok(())
     }

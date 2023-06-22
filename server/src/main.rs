@@ -8,7 +8,7 @@ use axum::{
 };
 use server::{custom_uri::create_custom_uri_endpoint, get_spaces_dir, Node};
 use tower_http::cors::CorsLayer;
-use tracing::info;
+use tracing::{debug, field::debug, info};
 
 mod utils;
 
@@ -43,6 +43,8 @@ async fn main() {
                 };
                 use http::{header, HeaderValue, StatusCode};
 
+                debug!("serving index.html");
+
                 match APP_DIR.get_file("index.html") {
                     Some(file) => Response::builder()
                         .status(StatusCode::OK)
@@ -58,6 +60,47 @@ async fn main() {
                         .unwrap(),
                 }
             }),
+        )
+        .route(
+            "/*id",
+            get(
+                |axum::extract::Path(path): axum::extract::Path<String>| async move {
+                    use axum::{
+                        body::{self, Empty, Full},
+                        response::Response,
+                    };
+                    use http::{header, HeaderValue, StatusCode};
+
+                    let path = path.trim_start_matches('/');
+                    match APP_DIR.get_file(path) {
+                        Some(file) => Response::builder()
+                            .status(StatusCode::OK)
+                            .header(
+                                header::CONTENT_TYPE,
+                                HeaderValue::from_str(
+                                    mime_guess::from_path(path).first_or_text_plain().as_ref(),
+                                )
+                                .unwrap(),
+                            )
+                            .body(body::boxed(Full::from(file.contents())))
+                            .unwrap(),
+                        None => match APP_DIR.get_file("index.html") {
+                            Some(file) => Response::builder()
+                                .status(StatusCode::OK)
+                                .header(
+                                    header::CONTENT_TYPE,
+                                    HeaderValue::from_str("text/html").unwrap(),
+                                )
+                                .body(body::boxed(Full::from(file.contents())))
+                                .unwrap(),
+                            None => Response::builder()
+                                .status(StatusCode::NOT_FOUND)
+                                .body(body::boxed(Empty::new()))
+                                .unwrap(),
+                        },
+                    }
+                },
+            ),
         )
         .route("/upload", {
             let node = node.clone();
