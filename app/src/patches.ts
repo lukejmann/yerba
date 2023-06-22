@@ -1,6 +1,7 @@
 import { wsBatchLink } from '@rspc/client/v2';
 
-const serverOrigin = import.meta.env.DEV ? 'localhost:8080' : import.meta.env.VITE_SERVER_BASE;
+const serverOrigin =
+	process.env.NODE_ENV === 'development' ? 'localhost:8080' : import.meta.env.VITE_SERVER_BASE;
 const http = import.meta.env.DEV ? 'http' : 'https';
 
 globalThis.isDev = import.meta.env.DEV;

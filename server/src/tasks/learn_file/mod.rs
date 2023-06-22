@@ -39,11 +39,6 @@ pub struct LearnFileTaskState {
     relative_path: String,
 }
 
-static SCRIPTS_PATH: &str = "/Users/two/yerba/server/python";
-
-// TODO: fix embedding
-// static SCRIPTS_DIR: include_dir::Dir<'static> = include_dir::include_dir!(SCRIPTS_PATH);
-
 #[async_trait::async_trait]
 impl TaskExec for LearnFileTask {
     type Info = LearnFileTaskInfo;
