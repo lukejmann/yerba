@@ -1,6 +1,5 @@
 use std::{env, net::SocketAddr};
 
-use anyhow::Error;
 use axum::{
     extract::{DefaultBodyLimit, Multipart},
     handler::Handler,
@@ -8,7 +7,7 @@ use axum::{
 };
 use server::{custom_uri::create_custom_uri_endpoint, get_spaces_dir, Node};
 use tower_http::cors::CorsLayer;
-use tracing::{debug, field::debug, info};
+use tracing::{debug, info};
 
 mod utils;
 
@@ -150,7 +149,7 @@ async fn main() {
                         )
                         .await;
 
-                    if let Err(e) = res {
+                    if let Err(_e) = res {
                         return "Error uploading file";
                     }
                 }

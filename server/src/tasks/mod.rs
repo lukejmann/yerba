@@ -194,7 +194,7 @@ impl<T: TaskExec> DTask for Task<T> {
 
         debug!("Created task in db{}", self_id);
 
-        let res = self
+        let _res = self
             .task_with_state
             .setup(space, self.id, &mut self.task_info)
             .await?;
@@ -205,7 +205,7 @@ impl<T: TaskExec> DTask for Task<T> {
     }
 
     async fn run(&mut self, space: &Space, _dispatcher: Arc<Dispatcher>) -> Result<()> {
-        let res = self
+        let _res = self
             .task_with_state
             .run(space, self.id, &mut self.task_info)
             .await?;
@@ -218,7 +218,7 @@ impl<T: TaskExec> DTask for Task<T> {
         _dispatcher: Arc<Dispatcher>,
         task_status: i32,
     ) -> Result<()> {
-        let res = self
+        let _res = self
             .task_with_state
             .finish(space, self.id, &mut self.task_info)
             .await?;

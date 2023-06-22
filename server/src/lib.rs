@@ -2,7 +2,6 @@
 
 use crate::{
     api::{CoreEvent, Router},
-    tasks::{upload_file::FileUploadTaskInfo, IntoTask},
 };
 
 use axum::body::Bytes;
@@ -14,10 +13,7 @@ use std::{
     sync::Arc,
 };
 use tasks::dispatcher::Dispatcher;
-use tracing_appender::{
-    non_blocking::{NonBlocking, WorkerGuard},
-    rolling::{RollingFileAppender, Rotation},
-};
+
 use utils::load_and_migrate;
 use uuid::Uuid;
 
@@ -25,7 +21,7 @@ use anyhow::{anyhow, Context, Result};
 use tokio::{fs, io::AsyncWriteExt, sync::broadcast};
 use tracing::{info, warn, Level};
 
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{prelude::*};
 
 pub mod api;
 pub mod custom_uri;
@@ -115,7 +111,7 @@ impl Node {
         Ok((Arc::new(node), router))
     }
 
-    pub fn init_logger(data_dir: impl AsRef<Path>) {
+    pub fn init_logger(_data_dir: impl AsRef<Path>) {
         let collector = tracing_subscriber::fmt()
             .with_max_level(Level::TRACE)
             .finish();

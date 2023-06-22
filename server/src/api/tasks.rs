@@ -5,10 +5,10 @@ use crate::{
 };
 pub use anyhow::{Context, Result};
 
-use custom_prisma::prisma::{file, space, task};
+use custom_prisma::prisma::{task};
 use rspc::alpha::AlphaRouter;
-use tracing::{debug, instrument::WithCollector};
-use uuid::Uuid;
+use tracing::{debug};
+
 
 use super::{utils::space, Ctx, R};
 
@@ -30,7 +30,7 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
             R.with2(space())
                 .mutation(|(_, space), args: FileUploadTaskInfo| async move {
                     debug!("Beginning upload");
-                    let upload_task_id = space
+                    let _upload_task_id = space
                         .clone()
                         .dispatcher
                         .dispatch(&space, args.clone().runnable())

@@ -1,11 +1,9 @@
-use anyhow::{Context, Error, Result};
+use anyhow::{Context, Result};
 use std::sync::Arc;
 
 use super::Node;
 use custom_prisma::prisma::{self, PrismaClient};
-use prisma_client_rust::{
-    migrations::DbPushError, prisma_errors::schema_engine::ApplyMigrationError,
-};
+
 use tokio::signal;
 use uuid::Uuid;
 
@@ -35,7 +33,7 @@ pub async fn load_and_migrate(db_url: &str) -> Result<PrismaClient> {
         .await
         .map_err(|e| anyhow::anyhow!("failed to create prisma client: {}", e))?;
 
-    let mut builder = client._db_push();
+    let builder = client._db_push();
 
     builder.await.with_context(|| {
         format!(

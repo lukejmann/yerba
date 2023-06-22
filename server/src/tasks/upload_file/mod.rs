@@ -11,10 +11,10 @@ use anyhow::{Context, Result};
 use std::fs::metadata;
 use std::time::{Duration, Instant};
 use tracing::{debug, info};
-use tracing_subscriber::field::debug;
+
 use uuid::Uuid;
 
-use super::{Task, TaskExec, TaskInfo, TaskState};
+use super::{TaskExec, TaskInfo, TaskState};
 
 pub struct FileUploadTask {}
 
@@ -176,7 +176,7 @@ impl TaskExec for FileUploadTask {
         &self,
         space: &Space,
         task_id: Uuid,
-        task_info: &mut TaskState<Self>,
+        _task_info: &mut TaskState<Self>,
     ) -> Result<()> {
         info!("upload_file::finish");
         invalidate_query!(space, "files.list");
