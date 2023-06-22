@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useEffect, useState } from 'react';
-import { http, serverOrigin } from '~/App';
 import { currentSpaceCache } from '~/main/user/SpacesProvider';
 import { authStore, useSpaceMutation } from '~/rspc';
 

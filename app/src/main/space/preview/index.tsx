@@ -1,7 +1,6 @@
 import { memo, useLayoutEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components/macro';
 import { proxy, useSnapshot } from 'valtio';
-import { http, serverOrigin } from '~/App';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
 import { useSpaceQuery } from '~/rspc';
 import { ItemSubtitle, ItemTitle, RowBetween, RowFixed, RowFlat, SectionHeader } from '~/ui';

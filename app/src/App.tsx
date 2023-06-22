@@ -4,10 +4,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import { YerbInterface, appRoutes } from './main';
 import { RspcProvider } from './rspc';
 
-export const serverOrigin = import.meta.env.SERVER_BASE || 'localhost:8080';
-
-export const http = import.meta.env.DEV ? 'http' : 'https';
-
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: undefined

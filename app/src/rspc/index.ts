@@ -5,6 +5,10 @@ declare global {
 	var isDev: boolean;
 	// eslint-disable-next-line
 	var rspcLinks: Link[];
+	// eslint-disable-next-line
+	var http: string;
+	// eslint-disable-next-line
+	var serverOrigin: string;
 }
 
 if (
