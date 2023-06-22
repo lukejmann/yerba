@@ -40,12 +40,16 @@ export const FloatingBar = React.forwardRef<HTMLDivElement, FloatingBarProps>(fu
 ) {
 	const styles = useSpring({
 		border: float ? '1px solid #e6e6e6' : '1px solid #e6e6e600',
-		boxShadow: float
-			? '0px 10px 30px -5px rgba(0, 0, 0, 0.3)'
-			: '0px 10px 30px -5px rgba(0, 0, 0, 0.01)',
+		boxShadow:
+			align == 'bottom'
+				? '0px 2px 3px -1px rgba(0, 0, 0, 0.0'
+				: float
+				? '0px 10px 30px -5px rgba(0, 0, 0, 0.3)'
+				: '0px 10px 30px -5px rgba(0, 0, 0, 0.01)',
 		// backdropFilter: float ? 'blur(7px)' : 'blur(0.1px)',
-		backgroundColor: float ? 'rgba(255, 255, 255, 0.88)' : 'rgba(255, 255, 255, 0.025)',
-		backdropFilter: float ? 'blur(200px)' : 'blur(0.1px)',
+		backgroundColor:
+			float || align == 'bottom' ? 'rgba(255, 255, 255, 0.87)' : 'rgba(255, 255, 255, 0.025)',
+		backdropFilter: float || align == 'bottom' ? 'blur(200px)' : 'blur(0.1px)',
 
 		config: {
 			tension: 300
@@ -112,6 +116,7 @@ interface FloatingBarWithContentProps {
 	scrollRef?: any;
 	panelRef?: any;
 	border?: string;
+	prefer?: 'top' | 'bottom';
 }
 
 export default function FloatingBarWithContent({
@@ -121,6 +126,7 @@ export default function FloatingBarWithContent({
 	scrollRef,
 	panelRef,
 	border,
+	prefer = 'top',
 	...props
 }: PropsWithChildren<FloatingBarWithContentProps>) {
 	const scrollContainerRefDefault = React.useRef<HTMLDivElement>(null);
@@ -141,13 +147,30 @@ export default function FloatingBarWithContent({
 	const scrollStyles = useSpring({ paddingTop: topHeight + 0, paddingBottom: bottomHeight + 0 });
 
 	const wrapperStyles = useSpring({
-		// boxShadow:
-		// 	(bottomBarContent && !bottomItemInView) || !topItemInView
-		// 		? '0 0 0 1pt #00000011'
-		// 		: '0 0 0 1pt #e6e6e600'
+		boxShadow:
+			!bottomItemInView || !topItemInView
+				? '0 0 0 1pt rgba(230, 230, 230, 0.2)'
+				: '0 0 0 1pt rgba(230, 230, 230, 0.02)'
 		// outlineOffset: '-16px',
 		// outlineRadius: '8px'
 	});
+
+	// scroll to bottom on scroll content change
+	React.useEffect(() => {
+		if (scrollContainerRef.current) {
+			if (prefer === 'bottom') {
+				scrollContainerRef.current.scrollTo({
+					top: scrollContainerRef.current.scrollHeight,
+					behavior: 'smooth'
+				});
+			} else {
+				scrollContainerRef.current.scrollTo({
+					top: 0,
+					behavior: 'smooth'
+				});
+			}
+		}
+	}, [scrollContent]);
 
 	return (
 		<FloatingBarTotalWrapper

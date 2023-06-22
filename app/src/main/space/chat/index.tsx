@@ -89,6 +89,7 @@ export default () => {
 				</ChatMessageRow>
 			))}
 			bottomBarContent={<ChatInputBar onSend={addMessage} />}
+			prefer="bottom"
 		/>
 		// </ChatWrapper>
 	);
@@ -100,7 +101,7 @@ const ChatMessageText = styled.div<{ align: 'left' | 'right'; index: number }>`
 	flex: 1 0 0;
 	color: #b3b6ca;
 	text-shadow: -32.98798751831055px 24.740989685058594px 74.22296905517578px 0px rgba(0, 0, 0, 0.3);
-	font-weight: 700;
+	font-weight: 600;
 	text-align: ${({ align }) => align};
 	color: ${({ theme, align }) =>
 		align === 'left' ? theme.otherMessageColor : theme.userMessageColor};
@@ -139,11 +140,11 @@ const ChatMessageContainer = styled.div<{ align: 'left' | 'right' }>`
 const ChatInputBarContainer = styled.div`
 	display: flex;
 	width: 100%;
-	padding: 11px 8.577px;
+	// padding: 11px 8.577px;
 	justify-content: space-between;
 	align-items: flex-end;
-	border-radius: 8px;
-	border: 1.072px solid var(--a, #e6e6e6);
+	// border-radius: 8px;
+	// border: 1.072px solid var(--a, #e6e6e6);
 	background: none;
 	// background: rgba(255, 255, 255, 0.38);
 	// box-shadow: -39px 30px 90px 0px rgba(0, 0, 0, 0.1);
@@ -155,8 +156,11 @@ const ChatInputBarInput = styled.input`
 	flex: 1 0 0;
 	color: #b3b6ca;
 	text-shadow: -32.98798751831055px 24.740989685058594px 74.22296905517578px 0px rgba(0, 0, 0, 0.3);
-	font-weight: 700;
-	height: 100px;
+	font-weight: 500;
+	font-size: 12px;
+	outline: none;
+	border: none;
+	min-height: 20px;
 `;
 
 const ChatInputBar = ({ onSend }: { onSend?: () => void }) => {
