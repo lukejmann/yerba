@@ -7,6 +7,9 @@ import { ItemSubtitle, ItemTitle, RowBetween, RowFixed, RowFlat, SectionHeader }
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import { filesStore } from '../files';
 
+console.log('serverOrigin in preview', serverOrigin);
+console.log('import.meta.env.SERVER_BASE in preview', import.meta.env.SERVER_BASE);
+
 export default () => {
 	const { selectedFile } = useSnapshot(filesStore);
 	const { space } = useSpacesContext();
