@@ -80,7 +80,7 @@ model File {
     name      String
     extension String
 
-    status Int @default(0) // 0 = uploading, 1 = uploaded, 2 = learning, 3 = learned, 4 = failed
+    supported Boolean @default(true)
 
     size Int @default(0)
 

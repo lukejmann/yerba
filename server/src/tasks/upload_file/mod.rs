@@ -33,6 +33,10 @@ impl TaskInfo for FileUploadTaskInfo {
     type Task = FileUploadTask;
 }
 
+const SUPPORTED_EXTENSIONS: [&str; 12] = [
+    "csv", "doc", "docx", "enex", "epub", "html", "md", "odt", "pdf", "ppt", "pptx", "txt",
+];
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileUploadTaskState {
     file_id: Uuid,
@@ -63,6 +67,15 @@ impl TaskExec for FileUploadTask {
         let extension = name.split('.').last().unwrap();
         name = name.split('.').next().unwrap();
 
+        let supported = SUPPORTED_EXTENSIONS
+            .iter()
+            .any(|ext| ext.to_string() == extension);
+
+        // print file name, extenstion, and if it is supported
+        info!("File name: {}", name);
+        info!("File extension: {}", extension);
+        info!("File supported: {}", supported);
+
         let file_data = space
             .db
             .file()
@@ -73,7 +86,10 @@ impl TaskExec for FileUploadTask {
                 name.to_string(),
                 extension.to_string(),
                 db_space::id::equals(u2b(space.clone().id)),
-                vec![file::tasks::connect(vec![task::id::equals(u2b(task_id))])],
+                vec![
+                    file::tasks::connect(vec![task::id::equals(u2b(task_id))]),
+                    file::supported::set(supported),
+                ],
             )
             .exec()
             .await?;

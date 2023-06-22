@@ -154,7 +154,8 @@ enum FileStatus {
 	Uploaded = 1,
 	Learning = 2,
 	Learned = 3,
-	Failed = 4
+	Failed = 4,
+	Unsupported = 5
 }
 
 enum TaskStatus {
@@ -164,7 +165,7 @@ enum TaskStatus {
 }
 
 const FileRow = ({ file }: { file: FileWrapped }) => {
-	const [status, setStatus] = useState<FileStatus>(file.file_with_tasks.status);
+	const [status, setStatus] = useState<FileStatus>(0);
 
 	const { selectedFile } = useSnapshot(filesStore);
 
@@ -192,11 +193,12 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 		setStatus(() => {
 			if (learningTasksCompleted.length > 0) return FileStatus.Learned;
 			if (learningTasksRunning.length > 0) return FileStatus.Learning;
+			if (!file.file_with_tasks.supported) return FileStatus.Unsupported;
 			if (uploadingTasksCompleted.length > 0) return FileStatus.Uploaded;
 			if (uploadingTasksRunning.length > 0) return FileStatus.Uploading;
 			return FileStatus.Failed;
 		});
-	}, [file.file_with_tasks.tasks]);
+	}, [file.file_with_tasks]);
 
 	const learnFile = useSpaceMutation('tasks.learnFile');
 
@@ -251,6 +253,8 @@ const indicatorToColor = (status: FileStatus) => {
 			return '#0fd804';
 		case FileStatus.Failed:
 			return '#d83904';
+		case FileStatus.Unsupported:
+			return '#f0f0f0';
 	}
 };
 

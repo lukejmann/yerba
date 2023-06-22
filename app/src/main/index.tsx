@@ -97,8 +97,7 @@ const Devtools = () => {
 export const YerbInterface = (props: { router: RouterProviderProps['router'] }) => {
 	return (
 		<ErrorBoundary FallbackComponent={ErrorFallback}>
-			<Devtools />
-			{/* <SpacedropUI /> */}
+			{/* <Devtools /> */}
 			<RouterProvider router={props.router} />
 		</ErrorBoundary>
 	);

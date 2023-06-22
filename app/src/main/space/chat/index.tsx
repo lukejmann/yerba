@@ -21,6 +21,12 @@ const ChatWrapper = styled.div<{ selected?: boolean }>`
 	background: ${({ theme }) => theme.backgroundFloatingBase};
 	// background: red;
 	height: 100%;
+	border-radius: 9px;
+	border: 1px solid var(--a, #e6e6e6);
+	background: rgba(255, 255, 255, 0.01);
+	/* b */
+	box-shadow: -39px 30px 90px 0px rgba(0, 0, 0, 0.1);
+	backdrop-filter: blur(7px);
 `;
 
 const ChatContentWrapper = styled.div`
@@ -44,14 +50,16 @@ export default () => {
 	const { space, spaces, currentSpaceId } = useSpacesContext();
 
 	return (
-		<FloatingBarWithContent
-			barContent={
-				<RowBetween padding={'md'}>
-					<SectionHeader>Chat</SectionHeader>
-				</RowBetween>
-			}
-			scrollContent={[<></>]}
-			// extraContent={[<ChatInputBar />]}
-		/>
+		<ChatWrapper>
+			<FloatingBarWithContent
+				barContent={
+					<RowBetween padding={'md'}>
+						<SectionHeader>Chat</SectionHeader>
+					</RowBetween>
+				}
+				scrollContent={[<></>]}
+				// extraContent={[<ChatInputBar />]}
+			/>
+		</ChatWrapper>
 	);
 };

@@ -27,11 +27,11 @@ export type DeleteSpaceArgs = { id: string }
 
 export type EditSpaceArgs = { name: string | null; description: string | null }
 
-export type File = { id: number[]; id_str: string; path: string; name: string; extension: string; status: number; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[] }
+export type File = { id: number[]; id_str: string; path: string; name: string; extension: string; supported: boolean; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[] }
 
 export type FileUploadTaskInfo = { path: string }
 
-export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; status: number; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: { id: number[]; id_str: string; task_type: string; status: number }[] }
+export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; supported: boolean; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: { id: number[]; id_str: string; task_type: string; status: number }[] }
 
 export type FileWrapped = { id: string; name: string; file_with_tasks: FileWithTasks }
 
