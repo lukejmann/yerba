@@ -1,7 +1,9 @@
+use crate::api::message_with_tasks_and_peer;
 use crate::get_spaces_dir;
 use crate::utils::{u2b, u2s};
 use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::hash::{Hash, Hasher};
+use std::vec;
 
 use custom_prisma::prisma::message::{self};
 use custom_prisma::prisma::{file, space as db_space, task};
@@ -31,7 +33,20 @@ pub struct ReplyTaskInfo {
 pub struct AskRequest {
     vector_db_path: String,
     question: String,
+    chat_history: String,
 }
+
+// JSON:
+//         [
+// 	{ "HUMAN": "Hello", "AI": "Hi! How can I assist you today?" },
+// 	{ "HUMAN": "Say that in german please", "AI": "" }
+// ]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ChatHistoryEntry {
+    pub HUMAN: String,
+    pub AI: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AskResponse {
     pub success: bool,
@@ -139,9 +154,57 @@ impl TaskExec for ReplyTask {
         let space_path = space_base_path.join(space.id.to_string());
         let vector_db_path = space_path.join("vector_db");
 
+        // now we need to get the chat history – the last 10 messages from the space (with response_status of 3) formatted as
+        // # [
+        //     #   {
+        //     #     "HUMAN": "foo",
+        //     #     "AI": "bar"
+        //     #   },
+        //     # ]
+
+        let mut chat_history = space
+            .db
+            .message()
+            .find_many(vec![
+                message::is_user_message::equals(true),
+                message::response_status::equals(2),
+                message::space_id::equals(u2b(space.id)),
+            ])
+            // .include(message_with_tasks_and_peer::include())
+            .order_by(message::date_created::order(
+                custom_prisma::prisma::SortOrder::Desc,
+            ))
+            .take(10)
+            .include(message_with_tasks_and_peer::include())
+            .exec()
+            .await?;
+        // now we need to reverse the order of the messages
+        let mut chat_history = chat_history.into_iter().rev().collect::<Vec<_>>();
+
+        // now we need to format the chat history into the format that the vector db expects
+        let chat_history = chat_history
+            .iter_mut()
+            .map(|message| {
+                // if the message has a response, the response is the AI message. otherwise it's an empty string
+                // the human message is always the message text
+                ChatHistoryEntry {
+                    HUMAN: message.clone().text.clone(),
+                    AI: message
+                        .clone()
+                        .response_message
+                        .map(|response| response.text.clone())
+                        .unwrap_or("".to_string()),
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let mut chat_history = serde_json::to_string(&chat_history)
+            .context("Failed to serialize chat history to json")?;
+
         let ask_request = AskRequest {
             vector_db_path: vector_db_path.to_string_lossy().into_owned(),
             question: data.message_text.clone(),
+            chat_history: chat_history,
         };
 
         debug!("Sending ask request: {:?}", ask_request);

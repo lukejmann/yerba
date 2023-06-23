@@ -4,6 +4,7 @@ use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::hash::{Hash, Hasher};
 use std::vec;
 
+use chrono::Utc;
 use custom_prisma::prisma::{file, space as db_space, task};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -83,7 +84,10 @@ impl TaskExec for LearnFileTask {
             .task()
             .update(
                 task::id::equals(u2b(task_id)),
-                vec![task::file::connect(file::id::equals(u2b(info.file_id)))],
+                vec![
+                    task::file::connect(file::id::equals(u2b(info.file_id))),
+                    task::date_modified::set(Utc::now().into()),
+                ],
             )
             .exec()
             .await?;

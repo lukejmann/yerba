@@ -13,7 +13,7 @@ pub(self) const R: Rspc<Ctx> = Rspc::new();
 pub type Ctx = Arc<Node>;
 pub type Router = rspc::Router<Ctx>;
 
-file::include!(file_with_tasks { tasks : select { id id_str task_type status } });
+file::include!(file_with_tasks { tasks });
 task::include!(task_with_file { file });
 message::include!(message_with_tasks_and_peer { tasks user_message response_message });
 

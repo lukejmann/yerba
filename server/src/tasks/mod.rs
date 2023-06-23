@@ -9,6 +9,7 @@ use std::{
     sync::Arc,
 };
 
+use chrono::Utc;
 use custom_prisma::prisma::{file, message, space as db_space, task};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -192,7 +193,10 @@ impl<T: TaskExec> DTask for Task<T> {
                 self_hash,
                 self_task_type,
                 db_space::id::equals(u2b(space.clone().id)),
-                vec![task::status::set(0)],
+                vec![
+                    task::status::set(0),
+                    task::date_modified::set(Utc::now().into()),
+                ],
             )
             .exec()
             .await?;
@@ -214,6 +218,8 @@ impl<T: TaskExec> DTask for Task<T> {
             .await
             .with_context(|| "Failed to find task")?
             .context("Failed to find task")?;
+
+        debug!("Task_data in setup: {:?}", task_data);
 
         if let Some(file_id) = task_data.clone().file_id {
             let file_with_tasks = space
@@ -321,7 +327,10 @@ impl<T: TaskExec> DTask for Task<T> {
             .task()
             .update(
                 task::id::equals(u2b(self.id)),
-                vec![task::status::set(task_status)],
+                vec![
+                    task::status::set(task_status),
+                    task::date_modified::set(Utc::now().into()),
+                ],
             )
             .exec()
             .await

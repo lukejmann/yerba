@@ -3,7 +3,7 @@
 
 export type Procedures = {
     queries: 
-        { key: "files.list", input: SpaceArgs<null>, result: FileWrapped[] } | 
+        { key: "files.list", input: SpaceArgs<null>, result: FileWithTasks[] } | 
         { key: "invalidation.test-invalidate", input: never, result: number } | 
         { key: "messages.list", input: SpaceArgs<MessageListArgs>, result: MessagesWrapped } | 
         { key: "spaces.list", input: UserArgs<null>, result: SpaceWrapped[] } | 
@@ -32,9 +32,7 @@ export type EditSpaceArgs = { name: string | null; description: string | null }
 
 export type FileUploadTaskInfo = { path: string }
 
-export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; supported: boolean; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: { id: number[]; id_str: string; task_type: string; status: number }[] }
-
-export type FileWrapped = { id: string; name: string; file_with_tasks: FileWithTasks }
+export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; supported: boolean; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: Task[] }
 
 export type InvalidateOperationEvent = { key: string; arg: any; result: any | null }
 
@@ -59,7 +57,7 @@ export type SpaceArgs<T> = { jwt_token: string; space_id: string; arg: T }
 
 export type SpaceWrapped = { id: string; meta: Meta }
 
-export type Task = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null; message_id: number[] | null }
+export type Task = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null; message_id: number[] | null; date_modified: string }
 
 export type User = { id: number[]; id_str: string; account_attached: boolean }
 

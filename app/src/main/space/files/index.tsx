@@ -1,19 +1,19 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes, useTheme } from 'styled-components/macro';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { proxyMap, subscribeKey } from 'valtio/utils';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
+import { FileWithTasks, Task, useSpaceMutation, useSpaceQuery, useSpaceSubscription } from '~/rspc';
 import {
-	File,
-	FileWithTasks,
-	FileWrapped,
-	Task,
-	useSpaceMutation,
-	useSpaceQuery,
-	useSpaceSubscription
-} from '~/rspc';
-import { ItemSubtitle, ItemTitle, RowBetween, RowFlat, SectionHeader, opacify } from '~/ui';
+	ItemStatus,
+	ItemSubtitle,
+	ItemTitle,
+	RowBetween,
+	RowFlat,
+	SectionHeader,
+	opacify
+} from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import SectionButton from '~/ui/buttons';
 import { useUploader } from './useUploader';
@@ -44,27 +44,23 @@ const FileWrapper = styled.div<{ selected?: boolean }>`
 `;
 
 export const filesStore = proxy({
-	selectedFile: null as null | FileWrapped
+	selectedFile: null as null | FileWithTasks
 });
 
-// export const fileIdToActiveTasks = proxyMap(
-// 	new Map<string, { id_str: string; task_type: string; status: number }[]>()
-// );
+enum FileStatus {
+	Uploading = 0,
+	Uploaded = 1,
+	Learning = 2,
+	Learned = 3,
+	Failed = 4,
+	Unsupported = 5
+}
 
-// const subscribeMapKey = <K extends unknown, V extends unknown>(
-// 	proxyMapObject: Map<K, V>,
-// 	key: K,
-// 	callback: (v: V | undefined) => void
-// ) => {
-// 	let prev: V | undefined;
-// 	return subscribe(proxyMapObject, () => {
-// 		const nextValue = proxyMapObject.get(key);
-// 		if (!prev || prev !== nextValue) {
-// 			prev = nextValue;
-// 			callback(nextValue);
-// 		}
-// 	});
-// };
+enum TaskStatus {
+	InProgress = 0,
+	Completed = 1,
+	Failed = 2
+}
 
 export default () => {
 	const { space, spaces, currentSpaceId } = useSpacesContext();
@@ -75,18 +71,20 @@ export default () => {
 
 	const { selectedFile } = useSnapshot(filesStore);
 
-	const { data: files } = useSpaceQuery(['files.list']);
+	const [queryFiles, setQueryFiles] = useState([] as FileWithTasks[]);
+
+	const { data: qFiles } = useSpaceQuery(['files.list']);
 	useEffect(() => {
-		if (!selectedFile && files && files?.length > 0) {
-			filesStore.selectedFile = files[0] ?? null;
-		}
-	}, [files]);
+		console.log('qFiles', qFiles);
+		setQueryFiles(qFiles ?? []);
+		// setQueryFiles(qFiles?.map((q) => q.file_with_tasks));
+		// console.log('queryFiles', queryFiles);
+	}, [qFiles]);
+	// console.log('files', files);
 
-	console.log('files', files);
+	// const queryClient = useQueryClient();
+	const [subFiles, setSubFiles] = useState([] as FileWithTasks[]);
 
-	const queryClient = useQueryClient();
-
-	// TODO: move out of here
 	useSpaceSubscription(['files.updates'], {
 		onStarted: () => {
 			console.log('files.updates init');
@@ -95,18 +93,57 @@ export default () => {
 			console.error('files.updateserror', err);
 		},
 		onData: (updatedFiles) => {
-			// replace the task in the map
 			console.log('files.updates data', updatedFiles);
-			queryClient.setQueryData(['files.list'], (lastFiles: FileWithTasks[] | undefined) => {
-				if (!lastFiles) return undefined;
-				const newFiles = lastFiles.map((file) => {
-					const inUpdated = updatedFiles.find((f) => f.id === file.id);
-					if (!inUpdated) return file;
-					return inUpdated;
-				});
-			});
+			setSubFiles(updatedFiles);
 		}
 	});
+
+	const files = useMemo(() => {
+		const mapById = new Map<string, FileWithTasks[]>();
+		const all = [...(queryFiles ?? []), ...subFiles];
+		console.log('all', all);
+		all.forEach((m) => {
+			const files = mapById.get(m.id_str) ?? [];
+			mapById.set(m.id_str, [...files, m]);
+		});
+
+		// TODO: just switch to server side tracking in file objects
+		const files = [...mapById.values()]
+			.map((files) => {
+				const sorted = files.sort((a, b) => {
+					const aHighestTask = a.tasks.sort(
+						(a, b) => new Date(b.date_modified).valueOf() - new Date(a.date_modified).valueOf()
+					)[0];
+					const bHighestTask = b.tasks.sort(
+						(a, b) => new Date(b.date_modified).valueOf() - new Date(a.date_modified).valueOf()
+					)[0];
+					return (
+						new Date(bHighestTask?.date_modified ?? 0).valueOf() -
+						new Date(aHighestTask?.date_modified ?? 0).valueOf()
+					);
+				});
+				return sorted[0];
+			})
+			.sort((a, b) => {
+				const aCreated = new Date(a?.date_created ?? 0).valueOf();
+				const bCreated = new Date(b?.date_created ?? 0).valueOf();
+				return bCreated - aCreated;
+			});
+
+		console.log('files', files);
+
+		// console
+
+		return files;
+	}, [queryFiles, subFiles]);
+
+	console.log('files', files);
+
+	useEffect(() => {
+		if (!selectedFile && files && files?.length > 0) {
+			filesStore.selectedFile = files[0] ?? null;
+		}
+	}, [files]);
 
 	const { setItems } = useUploader();
 
@@ -141,8 +178,9 @@ export default () => {
 			onDragLeaveCapture={handleDragLeave}
 			onDragEnd={handleDragLeave}
 			scrollContent={files?.map((file) => (
-				<FileRow file={file} />
+				<FileRow key={file?.id_str} file={file} />
 			))}
+			emptyState={<ItemStatus>Drag and drop files here to upload</ItemStatus>}
 			topBarContent={
 				<RowBetween padding={'md'}>
 					<SectionHeader>Files</SectionHeader>
@@ -152,37 +190,22 @@ export default () => {
 	);
 };
 
-enum FileStatus {
-	Uploading = 0,
-	Uploaded = 1,
-	Learning = 2,
-	Learned = 3,
-	Failed = 4,
-	Unsupported = 5
-}
-
-enum TaskStatus {
-	InProgress = 0,
-	Completed = 1,
-	Failed = 2
-}
-
-const FileRow = ({ file }: { file: FileWrapped }) => {
+const FileRow = ({ file }: { file: FileWithTasks }) => {
 	const [status, setStatus] = useState<FileStatus>(0);
 
 	const { selectedFile } = useSnapshot(filesStore);
 
-	const subKey = file.file_with_tasks.id_str;
+	const subKey = file.id_str;
 
 	useEffect(() => {
-		const tasks = file.file_with_tasks.tasks;
+		const tasks = file.tasks;
 		const uploadingTasksRunning = tasks.filter(
 			(task) => task.task_type === 'file_upload' && task.status === TaskStatus.InProgress
 		);
 		const uploadingTasksCompleted = tasks.filter(
 			(task) => task.task_type === 'file_upload' && task.status === TaskStatus.Completed
 		);
-		// console;
+
 		const learningTasksRunning = tasks.filter(
 			(task) => task.task_type === 'learn_file' && task.status === TaskStatus.InProgress
 		);
@@ -193,15 +216,27 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 		console.log('uploadingTasksCompleted', uploadingTasksCompleted);
 		console.log('learningTasksRunning', learningTasksRunning);
 		console.log('learningTasksCompleted', learningTasksCompleted);
-		setStatus(() => {
-			if (learningTasksCompleted.length > 0) return FileStatus.Learned;
-			if (learningTasksRunning.length > 0) return FileStatus.Learning;
-			if (!file.file_with_tasks.supported) return FileStatus.Unsupported;
-			if (uploadingTasksCompleted.length > 0) return FileStatus.Uploaded;
-			if (uploadingTasksRunning.length > 0) return FileStatus.Uploading;
-			return FileStatus.Failed;
-		});
-	}, [file.file_with_tasks]);
+		// if (learningTasksCompleted.length > 0) return FileStatus.Learned;
+		// 	if (learningTasksRunning.length > 0) return FileStatus.Learning;
+		// 	if (!file.file_with_tasks.supported) return FileStatus.Unsupported;
+		// 	if (uploadingTasksCompleted.length > 0) return FileStatus.Uploaded;
+		// 	if (uploadingTasksRunning.length > 0) return FileStatus.Uploading;
+		// 	return FileStatus.Failed;
+		const status =
+			learningTasksCompleted.length > 0
+				? FileStatus.Learned
+				: learningTasksRunning.length > 0
+				? FileStatus.Learning
+				: !file.supported
+				? FileStatus.Unsupported
+				: uploadingTasksCompleted.length > 0
+				? FileStatus.Uploaded
+				: uploadingTasksRunning.length > 0
+				? FileStatus.Uploading
+				: FileStatus.Failed;
+		console.log('status', status);
+		setStatus(status);
+	}, [file]);
 
 	const learnFile = useSpaceMutation('tasks.learnFile');
 
@@ -215,7 +250,7 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 		>
 			<RowFlat style={{ gap: '4px', width: '100%' }}>
 				<ItemTitle>{file.name}</ItemTitle>
-				<ItemSubtitle>{file.file_with_tasks.extension.replace('.', '').toUpperCase()}</ItemSubtitle>
+				<ItemSubtitle>{file.extension.replace('.', '').toUpperCase()}</ItemSubtitle>
 			</RowFlat>
 			{/* <div style={{ flex: 1, flexGrow: 1, background: 'red', width: '100%', height: '5px' }}></div> */}
 			<FileStatusIndicatorRow status={status} />
@@ -225,7 +260,7 @@ const FileRow = ({ file }: { file: FileWrapped }) => {
 					<SectionButton
 						text="Learn"
 						onClick={() => {
-							learnFile.mutate({ file_id: file.id.toString() });
+							learnFile.mutate({ file_id: file.id_str });
 							console.log('learnFile', file.id.toString());
 						}}
 					></SectionButton>
@@ -264,17 +299,17 @@ const indicatorToColor = (status: FileStatus) => {
 const pulse = keyframes`
 0% {
 	transform: scale(0.95);
-	// box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+	
 }
 
 70% {
 	transform: scale(1);
-	// box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+	
 }
 
 100% {
 	transform: scale(0.95);
-	// box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+	
 }
 `;
 
@@ -286,7 +321,6 @@ const FileStatusIndicator = styled.div<{ status: FileStatus }>`
 		${(props) => opacify(0.25, indicatorToColor(props.status))};
 	border-radius: 9.85892px;
 
-	// slightly pulse box-shadow if status is uploading or learning
 	animation: ${(props) =>
 		props.status === FileStatus.Uploading || props.status === FileStatus.Learning
 			? css`

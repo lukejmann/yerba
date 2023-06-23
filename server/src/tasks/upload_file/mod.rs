@@ -81,7 +81,7 @@ impl TaskExec for FileUploadTask {
             .file()
             .create(
                 u2b(file_new_id),
-                u2s(space.id),
+                u2s(file_new_id),
                 info.path.to_string(),
                 name.to_string(),
                 extension.to_string(),

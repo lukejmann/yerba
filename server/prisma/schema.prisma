@@ -87,6 +87,8 @@ model Task {
     Message    Message? @relation(fields: [message_id], references: [id])
     message_id Bytes?
 
+    date_modified DateTime @default(now())
+
     @@map("job")
 }
 

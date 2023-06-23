@@ -21,14 +21,14 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                     .exec()
                     .await?;
 
-                let files: Vec<FileWrapped> = files
-                    .into_iter()
-                    .map(|x| FileWrapped {
-                        id: Uuid::from_slice(&x.id).unwrap(),
-                        name: x.clone().name,
-                        file_with_tasks: x.clone().into(),
-                    })
-                    .collect();
+                // let files: Vec<FileWrapped> = files
+                //     .into_iter()
+                //     .map(|x| FileWrapped {
+                //         id: Uuid::from_slice(&x.id).unwrap(),
+                //         name: x.clone().name,
+                //         file_with_tasks: x.clone().into(),
+                //     })
+                //     .collect();
 
                 Ok(files)
             })

@@ -1,28 +1,16 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import styled, { css, keyframes } from 'styled-components/macro';
-import { proxy, subscribe, useSnapshot } from 'valtio';
-import { proxyMap, subscribeKey } from 'valtio/utils';
+import styled from 'styled-components/macro';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
 import {
-	FileWrapped,
 	Message,
 	MessageWithTasksAndPeer,
 	useAuth,
 	useRspcSpaceContext,
 	useSpaceMutation,
-	useSpaceQuery,
 	useSpaceSubscription
 } from '~/rspc';
-import {
-	ItemStatus,
-	ItemSubtitle,
-	ItemTitle,
-	RowBetween,
-	RowFlat,
-	SectionHeader,
-	opacify
-} from '~/ui';
+import { ItemStatus, RowBetween, SectionHeader } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import SectionButton from '~/ui/buttons';
 
@@ -165,11 +153,21 @@ export default () => {
 		);
 	}, [queryMessages, subMessages, outboxMesages]);
 
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const scrollToEnd = () => {
+		scrollRef.current?.scrollTo({
+			top: scrollRef.current.scrollHeight,
+			behavior: 'smooth'
+		});
+		console.log('scrollToEnd', scrollRef.current?.scrollHeight);
+	};
+
 	// reset on space change
 	useEffect(() => {
 		setCursor(0);
 		setSendError(null);
 		sendMessage.reset();
+		scrollToEnd();
 	}, [currentSpaceId]);
 
 	return (
@@ -181,10 +179,11 @@ export default () => {
 					<SectionHeader>Chat</SectionHeader>
 				</RowBetween>
 			}
+			scrollRef={scrollRef}
 			scrollContent={messages.map((message, index) => {
 				const align = message.is_user_message ? 'right' : 'left';
 				return (
-					<ChatMessageRow align={align} key={index}>
+					<ChatMessageRow align={align} key={message.id_str}>
 						<ChatMessageContainer align={align} key={index}>
 							<ChatMessageText index={index} align={align}>
 								{message.text}
@@ -195,10 +194,14 @@ export default () => {
 			})}
 			bottomBarContent={
 				<ChatInputBar
+					onFocus={() => {
+						scrollToEnd();
+					}}
 					sendMessage={(message: string) => {
 						sendMessage.mutate({
 							text: message
 						});
+						scrollToEnd();
 					}}
 					error={sendError}
 				/>
@@ -281,9 +284,11 @@ const ChatInputBarInput = styled.input`
 
 const ChatInputBar = ({
 	sendMessage,
+	onFocus,
 	error
 }: {
 	sendMessage?: (message: string) => void;
+	onFocus?: () => void;
 	error: string | null;
 }) => {
 	const [message, setMessage] = useState<string>('');
@@ -309,6 +314,7 @@ const ChatInputBar = ({
 	return (
 		<ChatInputBarContainer>
 			<ChatInputBarInput
+				onFocus={onFocus}
 				placeholder={'Type a message...'}
 				onChange={(e) => setMessage(e.target.value)}
 				value={message}

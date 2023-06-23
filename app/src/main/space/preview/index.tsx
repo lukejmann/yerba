@@ -10,6 +10,7 @@ import { filesStore } from '../files';
 
 export default () => {
 	const { selectedFile } = useSnapshot(filesStore);
+	console.log('selectedFile in preview', selectedFile);
 	const { space } = useSpacesContext();
 
 	return (
@@ -17,9 +18,9 @@ export default () => {
 			scrollContent={[
 				<Viewer
 					spaceId={space?.id.toString() || undefined}
-					selectedFileId={selectedFile?.id.toString() || undefined}
-					selectedFileExtension={selectedFile?.file_with_tasks.extension}
-					key={selectedFile?.id ?? '1'}
+					selectedFileId={selectedFile?.id_str || undefined}
+					selectedFileExtension={selectedFile?.extension}
+					key={selectedFile?.id_str ?? '1'}
 				/>
 			]}
 			topBarContent={
@@ -29,7 +30,7 @@ export default () => {
 					}}
 				>
 					<SectionHeader>{selectedFile?.name}</SectionHeader>
-					<ItemSubtitle>{selectedFile?.file_with_tasks.extension.toUpperCase()}</ItemSubtitle>
+					<ItemSubtitle>{selectedFile?.extension.toUpperCase()}</ItemSubtitle>
 				</RowFixed>
 			}
 		/>
@@ -102,13 +103,16 @@ export const Viewer = memo(
 			extLower == 'pdf' ? (
 				<iframe src={link.href} style={{ objectFit: 'fill', width: '100%', height: '100%' }} />
 			) : extLower == 'jpg' || extLower == 'png' || extLower == 'gif' ? (
-				// preserve aspect ratio
-				<img
-					src={src}
-					style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
-				/>
+				src ? (
+					<img
+						src={src}
+						style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
+					/>
+				) : null
 			) : extLower == 'mp4' ? (
-				<video src={src} style={{ width: '100%', height: '100%' }} />
+				src ? (
+					<video src={src} style={{ width: '100%', height: '100%' }} />
+				) : null
 			) : (
 				<></>
 			)

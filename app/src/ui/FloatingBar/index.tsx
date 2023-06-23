@@ -123,6 +123,7 @@ interface FloatingBarWithContentProps {
 	panelRef?: any;
 	border?: string;
 	prefer?: 'top' | 'bottom';
+	emptyState?: ReactNode;
 }
 
 export default function FloatingBarWithContent({
@@ -134,6 +135,7 @@ export default function FloatingBarWithContent({
 	panelRef,
 	border,
 	prefer = 'top',
+	emptyState,
 	...props
 }: PropsWithChildren<FloatingBarWithContentProps>) {
 	const scrollContainerRefDefault = React.useRef<HTMLDivElement>(null);
@@ -214,7 +216,7 @@ export default function FloatingBarWithContent({
 						>
 							{item}
 						</animated.div>
-					))}
+					)) || emptyState}
 				</FloatingBarScrollContent>
 				{bottomBarContent && (
 					<FloatingBar

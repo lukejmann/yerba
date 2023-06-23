@@ -10,7 +10,8 @@ from pydantic import BaseModel
 from langchain.chains import RetrievalQA
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.llms import OpenAIChat
+
+# from langchain.llms import OpenAIChat
 from langchain.document_loaders import (
     CSVLoader,
     EverNoteLoader,
@@ -27,6 +28,9 @@ from langchain.document_loaders import (
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from chromadb.config import Settings
+from langchain.chat_models import ChatOpenAI
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
+import json
 
 
 def does_vectorstore_exist(persist_directory: str) -> bool:
@@ -107,9 +111,9 @@ LOADER_MAPPING = {
 }
 
 
-load_dotenv()
+load_dotenv("../.env")
 
-open_ai_api_key = os.environ.get("OPENAI_API_KEY")
+open_ai_api_key = "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"
 
 chunk_size = 500
 chunk_overlap = 50
@@ -128,6 +132,14 @@ class LearnResponse(BaseModel):
 class AskRequest(BaseModel):
     vector_db_path: str
     question: str
+    # chat history is a json array formatted as follows:
+    # [
+    #   {
+    #     "HUMAN": "foo",
+    #     "AI": "bar"
+    #   },
+    # ]
+    chat_history: str
 
 
 class AskResponse(BaseModel):
@@ -137,6 +149,57 @@ class AskResponse(BaseModel):
 
 
 app = FastAPI()
+
+
+@app.post("/ask", response_model=AskResponse)
+async def ask(request: AskRequest):
+    try:
+        print("ask")
+        print(request)
+
+        question = request.question
+        persist_directory = request.vector_db_path
+
+        history = json.loads(request.chat_history or "[]")
+        print(f"history: {history}")
+        # need history formatted as [(foo, bar), (foo, bar)]. if is empty string, then []
+        if history == "":
+            history = []
+        chat_history = [(x["HUMAN"], x["AI"]) for x in history]
+        print(f"chat_history: {chat_history}")
+
+        openai_embeddings = OpenAIEmbeddings(openai_api_key=open_ai_api_key)
+
+        chroma_settings = Settings(
+            chroma_db_impl="duckdb+parquet",
+            persist_directory=persist_directory,
+            anonymized_telemetry=False,
+        )
+        db = Chroma(
+            persist_directory=persist_directory,
+            embedding_function=openai_embeddings,
+            client_settings=chroma_settings,
+        )
+        retriever = db.as_retriever(search_kwargs={"k": 6})
+
+        llm = ChatOpenAI(openai_api_key=open_ai_api_key)
+
+        qa = ConversationalRetrievalChain.from_llm(llm, retriever)
+
+        start = time.time()
+        result = qa({"question": question, "chat_history": chat_history})
+        print(f"result: {result}")
+        # pr
+        # res = qa(question)
+        answer = result["answer"]
+        end = time.time()
+
+        print(f"Answer: {result} generated in {end - start} seconds")
+
+        return AskResponse(success=True, result=answer)
+    except Exception as e:
+        print(f"Error: {e}")
+        return AskResponse(success=False, error=str(e))
 
 
 @app.post("/learn", response_model=LearnResponse)
@@ -178,50 +241,6 @@ async def learn(request: LearnRequest):
         return LearnResponse(success=True)
     except Exception as e:
         return LearnResponse(success=False, error=str(e))
-
-
-@app.post("/ask", response_model=AskResponse)
-async def ask(request: AskRequest):
-    try:
-        print("ask")
-        print(request)
-
-        question = request.question
-        persist_directory = request.vector_db_path
-
-        openai_embeddings = OpenAIEmbeddings(openai_api_key=open_ai_api_key)
-
-        chroma_settings = Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory=persist_directory,
-            anonymized_telemetry=False,
-        )
-        db = Chroma(
-            persist_directory=persist_directory,
-            embedding_function=openai_embeddings,
-            client_settings=chroma_settings,
-        )
-        retriever = db.as_retriever(search_kwargs={"k": 4})
-
-        llm = OpenAIChat(openai_api_key=open_ai_api_key)
-
-        qa = RetrievalQA.from_chain_type(
-            llm=llm,
-            chain_type="stuff",
-            retriever=retriever,
-            return_source_documents=False,
-        )
-
-        start = time.time()
-        res = qa(question)
-        answer = res["result"]
-        end = time.time()
-
-        print(f"Answer: {answer} generated in {end - start} seconds")
-
-        return AskResponse(success=True, result=answer)
-    except Exception as e:
-        return AskResponse(success=False, error=str(e))
 
 
 if __name__ == "__main__":

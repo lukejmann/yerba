@@ -57,7 +57,7 @@ export default () => {
 		<SpaceContainer>
 			<RowBetween>
 				<SpaceHeader></SpaceHeader>
-				{space && (
+				{/* {space && (
 					<SectionButton
 						onClick={() => {
 							if (!space) return;
@@ -67,7 +67,7 @@ export default () => {
 						}}
 						text="Delete"
 					/>
-				)}
+				)}*/}
 			</RowBetween>
 			<ContentPanelGroup autoSaveId="spaceHorizontal" direction="horizontal">
 				<ContentPanel defaultSize={30} minSize={15}>
