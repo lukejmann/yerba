@@ -35,13 +35,13 @@ I've found that too much of the time I'm spending around LLMs involves copying e
 - [x] File uploads and tracking
 - [x] Task dispatching and execution system
 - [x] File management tasks
-- [ ] CI/CD pipeline
-- [ ] Vector database tasks
-  - [ ] Create database for space
-  - [ ] Injesting files
-  - [ ] Retrieving files
-  - [ ] Request query
-- [ ] Chat interface
+- [x] CI/CD pipeline
+- [x] Vector database tasks
+  - [x] Create database for space
+  - [x] Injesting files
+  - [x] Retrieving files
+  - [x] Request query
+- [x] Chat interface
 - [ ] Connect external auth providers
 - [ ] Node to node communication (locks on spaces)
 
