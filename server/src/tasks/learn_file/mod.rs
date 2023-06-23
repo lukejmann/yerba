@@ -23,6 +23,8 @@ use super::{TaskExec, TaskInfo, TaskState};
 
 pub struct LearnFileTask {}
 
+pub(crate) const LEARN_URL: &str = "http://localhost:5001/learn";
+
 #[derive(Serialize, Deserialize, Clone, Type)]
 pub struct LearnFileTaskInfo {
     pub file_id: Uuid,
@@ -37,9 +39,6 @@ impl Hash for LearnFileTaskInfo {
 impl TaskInfo for LearnFileTaskInfo {
     type Task = LearnFileTask;
 }
-
-const VECTOR_DB_PATH: &str = "vector_db";
-const LEARN_URL: &str = "http://localhost:5001/learn";
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LearnRequest {
@@ -115,7 +114,7 @@ impl TaskExec for LearnFileTask {
         let space_base_path = get_spaces_dir().await;
         let space_path = space_base_path.join(space.id.to_string());
 
-        let vector_db_path = space_path.join(VECTOR_DB_PATH);
+        let vector_db_path = space_path.join("vector_db");
         let file_path = space_path.join(file_path);
         // create if not exists
         if !vector_db_path.exists() {
@@ -150,7 +149,7 @@ impl TaskExec for LearnFileTask {
         _task_info: &mut TaskState<Self>,
     ) -> Result<()> {
         info!("learn_file::finish");
-        invalidate_query!(space, "files.list");
+        // invalidate_query!(space, "files.list");
 
         Ok(())
     }

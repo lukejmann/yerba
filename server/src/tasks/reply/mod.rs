@@ -1,9 +1,11 @@
+use crate::get_spaces_dir;
 use crate::utils::{u2b, u2s};
 use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::hash::{Hash, Hasher};
 
 use custom_prisma::prisma::message::{self};
 use custom_prisma::prisma::{file, space as db_space, task};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
@@ -22,6 +24,19 @@ pub struct ReplyTask {}
 #[derive(Serialize, Deserialize, Clone, Type)]
 pub struct ReplyTaskInfo {
     pub message_id: Uuid,
+    pub message_text: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AskRequest {
+    vector_db_path: String,
+    question: String,
+}
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AskResponse {
+    pub success: bool,
+    pub error: Option<String>,
+    pub result: Option<String>,
 }
 
 impl Hash for ReplyTaskInfo {
@@ -33,10 +48,13 @@ impl Hash for ReplyTaskInfo {
 impl TaskInfo for ReplyTaskInfo {
     type Task = ReplyTask;
 }
+pub(crate) const ASK_URL: &str = "http://localhost:5001/learn";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ReplyTaskState {
     message_id: Uuid,
+    response_message_id: Uuid,
+    message_text: String,
     error: Option<String>,
 }
 
@@ -59,8 +77,19 @@ impl TaskExec for ReplyTask {
         debug!("reply::setup");
         let Space { .. } = space;
         let info = task_info.info.clone();
-
         let message_id = info.message_id;
+        // attach the task to the message
+        let response_message_data = space
+            .db
+            .message()
+            .update(
+                message::id::equals(u2b(message_id)),
+                vec![message::tasks::connect(vec![task::id::equals(u2b(
+                    task_id,
+                ))])],
+            )
+            .exec()
+            .await?;
 
         // create response message with status "generating"
         let response_message_id = Uuid::new_v4();
@@ -73,12 +102,21 @@ impl TaskExec for ReplyTask {
                 "Generating response...".to_string(),
                 db_space::id::equals(u2b(space.id)),
                 vec![
+                    message::is_user_message::set(false),
                     message::response_status::set(1),
                     message::user_message::connect(message::id::equals(u2b(message_id))),
+                    message::tasks::connect(vec![task::id::equals(u2b(task_id))]),
                 ],
             )
             .exec()
             .await?;
+
+        task_info.data = Some(ReplyTaskState {
+            message_id,
+            response_message_id,
+            message_text: info.message_text,
+            error: None,
+        });
 
         Ok(())
     }
@@ -90,57 +128,38 @@ impl TaskExec for ReplyTask {
         task_info: &mut TaskState<Self>,
     ) -> Result<()> {
         debug!("reply::run");
-        // scan the path every 200ms and update the file size. If the file size is the same for 1s, then we can assume the file is done uploading
+        let data = task_info
+            .data
+            .as_mut()
+            .context("Failed to get upload task data")?;
 
-        // let info = task_info.info.clone();
-        // let mut last_size: i32 = 0;
-        // let mut stable_since = Instant::now();
+        let space_base_path = get_spaces_dir().await;
+        let space_path = space_base_path.join(space.id.to_string());
+        let vector_db_path = space_path.join("vector_db");
 
-        // let data = task_info
-        //     .data
-        //     .as_mut()
-        //     .context("Failed to get upload task data")?;
+        let ask_request = AskRequest {
+            vector_db_path: vector_db_path.to_string_lossy().into_owned(),
+            question: data.message_text.clone(),
+        };
 
-        // loop {
-        //     // Pause for a short period
-        //     tokio::time::sleep(Duration::from_millis(100)).await;
+        debug!("Sending ask request: {:?}", ask_request);
 
-        //     let space_path = space.path().await;
-        //     let path = space_path.join(&info.path);
+        let client = Client::new();
+        let res = client
+            .post(ASK_URL)
+            .json(&ask_request)
+            .send()
+            .await
+            .context("Failed to send ask request")?;
 
-        //     // Get the current file size
-        //     let current_size = metadata(&path)
-        //         .context(format!("Failed to get file size for {:?}", info.path))?
-        //         .len()
-        //         .try_into()?;
+        let ask_response: AskResponse = res.json().await.context("Failed to parse ask response")?;
 
-        //     if current_size == last_size {
-        //         // If the size is unchanged, check how long it has been stable
-        //         if stable_since.elapsed() > Duration::from_secs(1) {
-        //             // If it's been stable for 1s or more, the upload is complete
-        //             break;
-        //         }
-        //     } else {
-        //         // If the size has changed, update the size and the stable_since time
-        //         last_size = current_size;
-        //         stable_since = Instant::now();
-
-        //         // Update the file size in the database
-        //         let res = space
-        //             .db
-        //             .file()
-        //             .update(
-        //                 file::id::equals(u2b(data.file_id)),
-        //                 vec![file::size::set(current_size)],
-        //             )
-        //             .exec()
-        //             .await;
-
-        //         if let Err(e) = res {
-        //             bail!("Failed to update file size: {}", e);
-        //         }
-        //     }
-        // }
+        task_info.data = Some(ReplyTaskState {
+            message_id: data.message_id,
+            response_message_id: data.response_message_id,
+            message_text: data.message_text.clone(),
+            error: ask_response.error,
+        });
 
         Ok(())
     }
@@ -148,10 +167,47 @@ impl TaskExec for ReplyTask {
         &self,
         space: &Space,
         task_id: Uuid,
-        _task_info: &mut TaskState<Self>,
+        task_info: &mut TaskState<Self>,
     ) -> Result<()> {
-        // info!("reply::finish");
-        // invalidate_query!(space, "files.list");
+        debug!("reply::finish");
+
+        let data = task_info
+            .data
+            .as_mut()
+            .context("Failed to get upload task data")?;
+
+        // set response_message.response_status to 3 if error
+        // set response_message.text to error message
+        // set date_finalized on both messages
+
+        let response_message_data = space
+            .db
+            .message()
+            .update(
+                message::id::equals(u2b(data.response_message_id)),
+                // db_space::id::equals(u2b(space.id)),
+                vec![
+                    message::response_status::set(if data.error.is_some() { 3 } else { 2 }),
+                    message::text::set(data.error.clone().unwrap_or("".to_string())),
+                    message::date_finalized::set(chrono::Utc::now().into()),
+                ],
+            )
+            .exec()
+            .await?;
+
+        let message_data = space
+            .db
+            .message()
+            .update(
+                message::id::equals(u2b(data.message_id)),
+                // db_space::id::equals(u2b(space.id)),
+                vec![
+                    message::response_status::set(if data.error.is_some() { 3 } else { 2 }),
+                    message::date_finalized::set(chrono::Utc::now().into()),
+                ],
+            )
+            .exec()
+            .await?;
 
         Ok(())
     }

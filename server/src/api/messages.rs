@@ -67,23 +67,22 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                         }
                     }
 
-                    let  oldest_message = latest_messages.last();
+                    let oldest_message = latest_messages.last();
                     let statute_of_limitations = chrono::Utc::now()
                         .checked_sub_signed(chrono::Duration::minutes(10))
                         .context("Failed to subtract time")?;
 
+                    // if let Some(oldest_message) = oldest_message {
+                    //     if user_message_count - 10 > system_message_count && oldest_message.date_created < statute_of_limitations {
+                    //     let diff = statute_of_limitations.timestamp_millis() - oldest_message.date_created.timestamp_millis();
+                    //     let diff_minutes = diff / 1000 / 60;
 
-                    if let Some(oldest_message) = oldest_message {
-                        if user_message_count - 10 > system_message_count && oldest_message.date_created < statute_of_limitations {
-                        let diff = statute_of_limitations.timestamp_millis() - oldest_message.date_created.timestamp_millis();
-                        let diff_minutes = diff / 1000 / 60;
-
-                        Err(anyhow!(format!(
-                            "You can't send a message until the system has responded to your last message. Please wait {} minutes and try again. Statute of limitations: {}",
-                            diff_minutes, statute_of_limitations
-                        )))?;
-                    }
-                    }
+                    //     Err(anyhow!(format!(
+                    //         "You can't send a message until the system has responded to your last message. Please wait {} minutes and try again. Statute of limitations: {}",
+                    //         diff_minutes, statute_of_limitations
+                    //     )))?;
+                    // }
+                    // }
 
                     // otherwise we can create a new message
                     let id = Uuid::new_v4();
@@ -105,14 +104,15 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                     debug!("Created message {:?}", message);
                     // invalidate_query!(&space, "messages.list");
 
-                    let reply_task = ReplyTaskInfo{
-                        message_id: id
+                    let reply_task = ReplyTaskInfo {
+                        message_id: id,
+                        message_text: message.text.clone(),
                     };
                     let learn_taskId = space
-                    .clone()
-                    .dispatcher
-                    .dispatch(&space, reply_task.clone().runnable())
-                    .await?;
+                        .clone()
+                        .dispatcher
+                        .dispatch(&space, reply_task.clone().runnable())
+                        .await?;
 
                     Ok(message)
                 })

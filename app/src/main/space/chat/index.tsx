@@ -113,12 +113,14 @@ export default () => {
 
 	useSpaceSubscription(['messages.updates'], {
 		onStarted: () => {
+			// console
 			console.log('messages.updates init');
 		},
 		onError: (err) => {
 			console.error('messages.updates error', err);
 		},
 		onData: (newOrUpdatesMessages: MessageWithTasksAndPeer[]) => {
+			console.log('messages.updates data', newOrUpdatesMessages);
 			setSubMessages(newOrUpdatesMessages);
 		}
 	});
@@ -128,6 +130,7 @@ export default () => {
 	const [sendError, setSendError] = useState<string | null>(null);
 	const sendMessage = useSpaceMutation(['messages.send'], {
 		onSuccess: (msg) => {
+			// cons
 			setSendError(null);
 			setOutboxMessages([...outboxMesages, msg]);
 		},
@@ -148,6 +151,8 @@ export default () => {
 				return ms;
 			})
 			.flat();
+
+		console.log('subMessagesExp', subMessagesExp);
 
 		const all = [...queryMessages, ...subMessagesExp, ...outboxMesages];
 		all.forEach((m) => {
