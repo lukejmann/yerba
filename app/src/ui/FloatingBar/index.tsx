@@ -203,20 +203,39 @@ export default function FloatingBarWithContent({
 					align={'top'}
 				></FloatingBar>
 				<FloatingBarScrollContent ref={scrollContainerRef} style={scrollStyles}>
-					{scrollContent?.map((item, index) => (
+					{scrollContent?.length ?? 0 > 0 ? (
+						scrollContent?.map((item, index) => (
+							<animated.div
+								key={index}
+								ref={
+									index === 0
+										? topItemRef
+										: index === scrollContent.length - 1
+										? bottomItemRef
+										: null
+								}
+								style={{
+									width: '100%',
+									height: scrollContent.length === 1 ? '100%' : 'fit-content'
+								}}
+							>
+								{item}
+							</animated.div>
+						))
+					) : (
 						<animated.div
-							key={index}
-							ref={
-								index === 0 ? topItemRef : index === scrollContent.length - 1 ? bottomItemRef : null
-							}
 							style={{
 								width: '100%',
-								height: scrollContent.length === 1 ? '100%' : 'fit-content'
+								height: '100%',
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: 'center'
 							}}
 						>
-							{item}
+							{emptyState}
 						</animated.div>
-					)) || emptyState}
+					)}
 				</FloatingBarScrollContent>
 				{bottomBarContent && (
 					<FloatingBar

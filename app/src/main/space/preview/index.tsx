@@ -5,9 +5,6 @@ import { ItemSubtitle, RowFixed, SectionHeader } from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import { filesStore } from '../files';
 
-// console.log('serverOrigin in preview', serverOrigin);
-// console.log('import.meta.env.VITE_SERVER_BASE in preview', import.meta.env.VITE_SERVER_BASE);
-
 export default () => {
 	const { selectedFile } = useSnapshot(filesStore);
 	console.log('selectedFile in preview', selectedFile);

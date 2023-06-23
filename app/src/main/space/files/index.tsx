@@ -1,10 +1,8 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled, { css, keyframes, useTheme } from 'styled-components/macro';
-import { proxy, subscribe, useSnapshot } from 'valtio';
-import { proxyMap, subscribeKey } from 'valtio/utils';
+import { proxy, useSnapshot } from 'valtio';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
-import { FileWithTasks, Task, useSpaceMutation, useSpaceQuery, useSpaceSubscription } from '~/rspc';
+import { FileWithTasks, useSpaceMutation, useSpaceQuery, useSpaceSubscription } from '~/rspc';
 import {
 	ItemStatus,
 	ItemSubtitle,
@@ -177,9 +175,9 @@ export default () => {
 			onDragLeave={handleDragLeave}
 			onDragLeaveCapture={handleDragLeave}
 			onDragEnd={handleDragLeave}
-			scrollContent={files?.map((file) => (
-				<FileRow key={file?.id_str} file={file} />
-			))}
+			scrollContent={files?.map((file) =>
+				file ? <FileRow key={file?.id_str} file={file} /> : null
+			)}
 			emptyState={<ItemStatus>Drag and drop files here to upload</ItemStatus>}
 			topBarContent={
 				<RowBetween padding={'md'}>
@@ -197,6 +195,7 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 
 	const subKey = file.id_str;
 
+	// TODO: just switch to server side tracking in file objects
 	useEffect(() => {
 		const tasks = file.tasks;
 		const uploadingTasksRunning = tasks.filter(
@@ -216,12 +215,7 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 		console.log('uploadingTasksCompleted', uploadingTasksCompleted);
 		console.log('learningTasksRunning', learningTasksRunning);
 		console.log('learningTasksCompleted', learningTasksCompleted);
-		// if (learningTasksCompleted.length > 0) return FileStatus.Learned;
-		// 	if (learningTasksRunning.length > 0) return FileStatus.Learning;
-		// 	if (!file.file_with_tasks.supported) return FileStatus.Unsupported;
-		// 	if (uploadingTasksCompleted.length > 0) return FileStatus.Uploaded;
-		// 	if (uploadingTasksRunning.length > 0) return FileStatus.Uploading;
-		// 	return FileStatus.Failed;
+
 		const status =
 			learningTasksCompleted.length > 0
 				? FileStatus.Learned
@@ -252,9 +246,7 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 				<ItemTitle>{file.name}</ItemTitle>
 				<ItemSubtitle>{file.extension.replace('.', '').toUpperCase()}</ItemSubtitle>
 			</RowFlat>
-			{/* <div style={{ flex: 1, flexGrow: 1, background: 'red', width: '100%', height: '5px' }}></div> */}
 			<FileStatusIndicatorRow status={status} />
-
 			<RowBetween>
 				{status === FileStatus.Uploaded && isDev && (
 					<SectionButton
