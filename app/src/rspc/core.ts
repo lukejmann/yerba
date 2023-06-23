@@ -5,10 +5,12 @@ export type Procedures = {
     queries: 
         { key: "files.list", input: SpaceArgs<null>, result: FileWrapped[] } | 
         { key: "invalidation.test-invalidate", input: never, result: number } | 
+        { key: "messages.list", input: SpaceArgs<MessageListArgs>, result: MessagesWrapped } | 
         { key: "spaces.list", input: UserArgs<null>, result: SpaceWrapped[] } | 
         { key: "tasks.list", input: SpaceArgs<null>, result: Task[] },
     mutations: 
         { key: "invalidation.test-invalidate-mutation", input: SpaceArgs<null>, result: null } | 
+        { key: "messages.send", input: SpaceArgs<MessageSendArgs>, result: MessageWithTasks } | 
         { key: "spaces.create", input: UserArgs<CreateSpaceArgs>, result: SpaceWrapped } | 
         { key: "spaces.delete", input: UserArgs<DeleteSpaceArgs>, result: null } | 
         { key: "spaces.edit", input: SpaceArgs<EditSpaceArgs>, result: Meta } | 
@@ -18,6 +20,7 @@ export type Procedures = {
     subscriptions: 
         { key: "files.updates", input: SpaceArgs<null>, result: FileWithTasks[] } | 
         { key: "invalidation.listen", input: never, result: InvalidateOperationEvent[] } | 
+        { key: "messages.updates", input: SpaceArgs<null>, result: MessageWithTasks[] } | 
         { key: "tasks.updates", input: SpaceArgs<null>, result: TaskWithFile[] }
 };
 
@@ -39,6 +42,14 @@ export type InvalidateOperationEvent = { key: string; arg: any; result: any | nu
 
 export type LearnFileTaskInfo = { file_id: string }
 
+export type MessageListArgs = { take?: number | null; cursor?: number[] | null }
+
+export type MessageSendArgs = { text: string }
+
+export type MessageWithTasks = { id: number[]; id_str: string; text: string; user_message: boolean; date_created: string; date_finalized: string; space_id: number[]; tasks: { id: number[]; id_str: string; task_type: string; status: number }[] }
+
+export type MessagesWrapped = { cursor: number[] | null; messages: MessageWithTasks[] }
+
 export type Meta = { id: number[]; id_str: string; name: string; description: string; color: string | null }
 
 /**
@@ -48,9 +59,9 @@ export type SpaceArgs<T> = { jwt_token: string; space_id: string; arg: T }
 
 export type SpaceWrapped = { id: string; meta: Meta }
 
-export type Task = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null }
+export type Task = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null; message_id: number[] | null }
 
-export type TaskWithFile = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null; File: File | null }
+export type TaskWithFile = { id: number[]; id_str: string; hash: string; status: number; task_type: string; space_id: number[]; file_id: number[] | null; message_id: number[] | null; File: File | null }
 
 export type User = { id: number[]; id_str: string; account_attached: boolean }
 

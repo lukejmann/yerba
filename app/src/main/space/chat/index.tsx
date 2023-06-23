@@ -1,10 +1,28 @@
-import { useEffect, useRef, useState } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components/macro';
 import { proxy, subscribe, useSnapshot } from 'valtio';
 import { proxyMap, subscribeKey } from 'valtio/utils';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
-import { FileWrapped, Task, useSpaceMutation, useSpaceQuery, useSpaceSubscription } from '~/rspc';
-import { ItemSubtitle, ItemTitle, RowBetween, RowFlat, SectionHeader, opacify } from '~/ui';
+import {
+	FileWrapped,
+	Message,
+	MessageWithTasks,
+	useAuth,
+	useRspcSpaceContext,
+	useSpaceMutation,
+	useSpaceQuery,
+	useSpaceSubscription
+} from '~/rspc';
+import {
+	ItemStatus,
+	ItemSubtitle,
+	ItemTitle,
+	RowBetween,
+	RowFlat,
+	SectionHeader,
+	opacify
+} from '~/ui';
 import FloatingBarWithContent from '~/ui/FloatingBar';
 import SectionButton from '~/ui/buttons';
 
@@ -45,50 +63,130 @@ const ChatTopBar = styled.div`
 	padding: 12px 8px;
 `;
 
-interface MessageProps {
-	text: string;
-	align: 'left' | 'right';
-}
-
-const chatStore = proxy({
-	// start with 100 random messages
-	messages: Array.from({ length: 100 }, (_, i) => ({
-		text: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-		align: i % 2 === 0 ? 'left' : ('right' as 'left' | 'right')
-	}))
-});
+// const STEP_SIZE = 10;
+// const chatStore = proxy({
+// 	messages: [] as Message[],
+// 	cursor: 0
+// });
 
 export default () => {
 	const { space, spaces, currentSpaceId } = useSpacesContext();
-	const { messages } = useSnapshot(chatStore);
-	const addMessage = () => {
-		// generate random string of length 100-500 chars
-		const randomString =
-			Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-		chatStore.messages.push({
-			text: randomString,
-			align: messages.length % 2 === 0 ? 'left' : 'right'
-		});
+	const jwt = useAuth();
+
+	const [cursor, setCursor] = useState<number>(0);
+	const grabNext = () => {
+		setCursor((c) => c + 1);
 	};
+
+	const ctx = useRspcSpaceContext();
+	const queryClient = useQueryClient();
+
+	const messagesQuery = useInfiniteQuery({
+		// enabled: isObjectQuery,
+		queryKey: [
+			'messages.list',
+			{
+				jtw_token: jwt,
+				space_id: currentSpaceId,
+				arg: {
+					take: 50
+				}
+			}
+		] as const,
+		queryFn: ({ pageParam: cursor, queryKey }) =>
+			ctx.client.query([
+				'messages.list',
+				{
+					...queryKey[1].arg,
+					cursor
+				}
+			]),
+		getNextPageParam: (lastPage) => lastPage.cursor ?? undefined
+	});
+
+	const queryMessages = useMemo(
+		() => messagesQuery.data?.pages?.flatMap((d) => d.messages) ?? [],
+		[messagesQuery.data]
+	);
+
+	const [subMessages, setSubMessages] = useState<MessageWithTasks[]>([]);
+
+	useSpaceSubscription(['messages.updates'], {
+		onStarted: () => {
+			console.log('messages.updates init');
+		},
+		onError: (err) => {
+			console.error('messages.updates error', err);
+		},
+		onData: (newOrUpdatesMessages: MessageWithTasks[]) => {
+			setSubMessages(newOrUpdatesMessages);
+		}
+	});
+
+	const [outboxMesages, setOutboxMessages] = useState<MessageWithTasks[]>([]);
+
+	const [sendError, setSendError] = useState<string | null>(null);
+	const sendMessage = useSpaceMutation(['messages.send'], {
+		onSuccess: () => {
+			setSendError(null);
+			setOutboxMessages([]);
+		},
+		onError: (err) => {
+			setSendError(err.message);
+		}
+	});
+
+	const messages = useMemo(() => {
+		const mapById = new Map<string, MessageWithTasks[]>();
+		const all = [...queryMessages, ...subMessages, ...outboxMesages];
+		all.forEach((m) => {
+			const messages = mapById.get(m.id_str) ?? [];
+			mapById.set(m.id_str, [...messages, m]);
+		});
+		// TODO decide how to filter
+		return ([...mapById.values()].map((ms) => ms[0]) as MessageWithTasks[]).sort(
+			(a, b) => new Date(a.date_created).getTime() - new Date(b.date_created).getTime()
+		);
+	}, [queryMessages, subMessages, outboxMesages]);
+
+	// reset on space change
+	useEffect(() => {
+		setCursor(0);
+		setSendError(null);
+		sendMessage.reset();
+	}, [currentSpaceId]);
 
 	return (
 		// <ChatWrapper>
 		<FloatingBarWithContent
+			onReachTop={messagesQuery.fetchNextPage}
 			topBarContent={
 				<RowBetween padding={'md'}>
 					<SectionHeader>Chat</SectionHeader>
 				</RowBetween>
 			}
-			scrollContent={messages.map((message, index) => (
-				<ChatMessageRow align={message.align} key={index}>
-					<ChatMessageContainer align={message.align} key={index}>
-						<ChatMessageText index={index} align={message.align}>
-							{message.text}
-						</ChatMessageText>
-					</ChatMessageContainer>
-				</ChatMessageRow>
-			))}
-			bottomBarContent={<ChatInputBar onSend={addMessage} />}
+			scrollContent={messages.map((message, index) => {
+				const align = message.user_message ? 'right' : 'left';
+				return (
+					<ChatMessageRow align={align} key={index}>
+						<ChatMessageContainer align={align} key={index}>
+							<ChatMessageText index={index} align={align}>
+								{message.text}
+							</ChatMessageText>
+						</ChatMessageContainer>
+					</ChatMessageRow>
+				);
+			})}
+			bottomBarContent={
+				<ChatInputBar
+					sendMessage={(message: string) => {
+						sendMessage.mutate({
+							text: message
+						});
+					}}
+					error={sendError}
+				/>
+			}
 			prefer="bottom"
 		/>
 		// </ChatWrapper>
@@ -99,20 +197,21 @@ const ChatMessageText = styled.div<{ align: 'left' | 'right'; index: number }>`
 	display: flex;
 	flex-direction: column;
 	flex: 1 0 0;
-	color: #b3b6ca;
+	// color: #b3b6ca;
 	text-shadow: -32.98798751831055px 24.740989685058594px 74.22296905517578px 0px rgba(0, 0, 0, 0.3);
 	font-weight: 600;
 	text-align: ${({ align }) => align};
 	color: ${({ theme, align }) =>
-		align === 'left' ? theme.otherMessageColor : theme.userMessageColor};
+		align === 'left' ? theme.otherMessageText : theme.userMessageText};
 	z-index: ${({ index }) => index};
 	font-size: 11px;
+	font-weight: 500;
+	width: fit-content;
 `;
 
 const ChatMessageRow = styled.div<{ align: 'left' | 'right' }>`
 	display: flex;
 	width: 100%;
-	// background: blue;
 	align-items: ${({ align }) => (align === 'left' ? 'flex-start' : 'flex-end')};
 
 	flex-direction: column;
@@ -120,7 +219,7 @@ const ChatMessageRow = styled.div<{ align: 'left' | 'right' }>`
 
 const ChatMessageContainer = styled.div<{ align: 'left' | 'right' }>`
 	display: flex;
-	width: 100%;
+	width: fit-content;
 	max-width: 500px;
 	padding: 11px 8.577px;
 	justify-content: space-between;
@@ -154,20 +253,54 @@ const ChatInputBarInput = styled.input`
 	display: flex;
 	flex-direction: column;
 	flex: 1 0 0;
-	color: #b3b6ca;
+	color: ${({ theme }) => theme.text1};
 	text-shadow: -32.98798751831055px 24.740989685058594px 74.22296905517578px 0px rgba(0, 0, 0, 0.3);
 	font-weight: 500;
 	font-size: 12px;
 	outline: none;
 	border: none;
 	min-height: 20px;
+	background: none;
 `;
 
-const ChatInputBar = ({ onSend }: { onSend?: () => void }) => {
+const ChatInputBar = ({
+	sendMessage,
+	error
+}: {
+	sendMessage?: (message: string) => void;
+	error: string | null;
+}) => {
+	const [message, setMessage] = useState<string>('');
+
+	const send = () => {
+		sendMessage?.(message);
+		setMessage('');
+	};
+
+	// on press enter
+	useEffect(() => {
+		const handleEnter = (e: KeyboardEvent) => {
+			if (e.key === 'Enter') {
+				send();
+			}
+		};
+		window.addEventListener('keydown', handleEnter);
+		return () => {
+			window.removeEventListener('keydown', handleEnter);
+		};
+	}, [message]);
+
 	return (
 		<ChatInputBarContainer>
-			<ChatInputBarInput placeholder={'Type a message...'} />
-			<SectionButton onClick={onSend} text="Send" />
+			<ChatInputBarInput
+				placeholder={'Type a message...'}
+				onChange={(e) => setMessage(e.target.value)}
+				value={message}
+			/>
+			<SectionButton onClick={() => send} text="Send" />
+			<div style={{ position: 'absolute', top: -10, left: 6 }}>
+				{error && <ItemStatus>{error}</ItemStatus>}
+			</div>
 		</ChatInputBarContainer>
 	);
 };

@@ -65,10 +65,29 @@ model Space {
     owner_id Bytes
     owner    User  @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-    files File[]
-    tasks Task[]
+    files   File[]
+    tasks   Task[]
+    Message Message[]
 
     @@map("space")
+}
+
+model Task {
+    id     Bytes  @id
+    id_str String
+    hash   String
+
+    status    Int    @default(0) // 0 = in-progress, 1 = success, 2 = failed
+    task_type String
+
+    space_id   Bytes
+    Space      Space    @relation(fields: [space_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    file_id    Bytes?
+    File       File?    @relation(fields: [file_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    Message    Message? @relation(fields: [message_id], references: [id])
+    message_id Bytes?
+
+    @@map("job")
 }
 
 model File {
@@ -95,18 +114,19 @@ model File {
     @@map("file")
 }
 
-model Task {
+model Message {
     id     Bytes  @id
     id_str String
-    hash   String
 
-    status    Int    @default(0) // 0 = in-progress, 1 = success, 2 = failed
-    task_type String
+    text String
 
-    space_id Bytes
-    Space    Space  @relation(fields: [space_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    file_id  Bytes?
-    File     File?  @relation(fields: [file_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    user_message Boolean @default(true)
 
-    @@map("job")
+    date_created   DateTime @default(now())
+    date_finalized DateTime @default(now())
+    space_id       Bytes
+    space          Space    @relation(fields: [space_id], references: [id])
+    tasks          Task[]
+
+    @@map("message")
 }

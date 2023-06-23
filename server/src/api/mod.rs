@@ -1,4 +1,4 @@
-use custom_prisma::prisma::{file, task};
+use custom_prisma::prisma::{file, message, task};
 use rspc::{alpha::Rspc, Config};
 use serde::Serialize;
 use specta::Type;
@@ -15,15 +15,24 @@ pub type Router = rspc::Router<Ctx>;
 
 file::include!(file_with_tasks { tasks : select { id id_str task_type status } });
 task::include!(task_with_file { file });
+message::include!(message_with_tasks { tasks : select { id id_str task_type status } });
 
 #[derive(Debug, Clone, Serialize, Type)]
 pub enum CoreEvent {
-    TaskUpdate { tasks: Vec<task_with_file::Data> },
-    FileUpdate { files: Vec<file_with_tasks::Data> },
+    TaskUpdate {
+        tasks: Vec<task_with_file::Data>,
+    },
+    FileUpdate {
+        files: Vec<file_with_tasks::Data>,
+    },
+    MessageUpdate {
+        messages: Vec<message_with_tasks::Data>,
+    },
     InvalidateOperation(InvalidateOperationEvent),
 }
 
 mod files;
+mod messages;
 mod spaces;
 mod tasks;
 mod users;
@@ -37,6 +46,7 @@ pub(crate) fn mount() -> Arc<Router> {
         .merge("spaces.", spaces::mount())
         .merge("tasks.", tasks::mount())
         .merge("files.", files::mount())
+        .merge("messages.", messages::mount())
         .merge("invalidation.", utils::mount_invalidate())
         .build(
             #[allow(clippy::let_and_return)]
