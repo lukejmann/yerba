@@ -183,6 +183,9 @@ async def learn(request: LearnRequest):
 @app.post("/ask", response_model=AskResponse)
 async def ask(request: AskRequest):
     try:
+        print("ask")
+        print(request)
+
         question = request.question
         persist_directory = request.vector_db_path
 
@@ -213,6 +216,8 @@ async def ask(request: AskRequest):
         res = qa(question)
         answer = res["result"]
         end = time.time()
+
+        print(f"Answer: {answer} generated in {end - start} seconds")
 
         return AskResponse(success=True, result=answer)
     except Exception as e:

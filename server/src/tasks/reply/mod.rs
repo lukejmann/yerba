@@ -35,7 +35,7 @@ pub struct AskRequest {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AskResponse {
     pub success: bool,
-    pub error: Option<String>,
+    pub response_error: Option<String>,
     pub result: Option<String>,
 }
 
@@ -48,14 +48,15 @@ impl Hash for ReplyTaskInfo {
 impl TaskInfo for ReplyTaskInfo {
     type Task = ReplyTask;
 }
-pub(crate) const ASK_URL: &str = "http://localhost:5001/learn";
+pub(crate) const ASK_URL: &str = "http://localhost:5001/ask";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ReplyTaskState {
     message_id: Uuid,
     response_message_id: Uuid,
     message_text: String,
-    error: Option<String>,
+    response_text: Option<String>,
+    response_error: Option<String>,
 }
 
 #[async_trait::async_trait]
@@ -115,7 +116,8 @@ impl TaskExec for ReplyTask {
             message_id,
             response_message_id,
             message_text: info.message_text,
-            error: None,
+            response_text: None,
+            response_error: None,
         });
 
         Ok(())
@@ -158,7 +160,8 @@ impl TaskExec for ReplyTask {
             message_id: data.message_id,
             response_message_id: data.response_message_id,
             message_text: data.message_text.clone(),
-            error: ask_response.error,
+            response_text: ask_response.result,
+            response_error: ask_response.response_error,
         });
 
         Ok(())
@@ -176,8 +179,10 @@ impl TaskExec for ReplyTask {
             .as_mut()
             .context("Failed to get upload task data")?;
 
-        // set response_message.response_status to 3 if error
-        // set response_message.text to error message
+        let response = data.response_text.clone();
+
+        // set response_message.response_status to 3 if response_error
+        // set response_message.text to response_error message
         // set date_finalized on both messages
 
         let response_message_data = space
@@ -187,8 +192,16 @@ impl TaskExec for ReplyTask {
                 message::id::equals(u2b(data.response_message_id)),
                 // db_space::id::equals(u2b(space.id)),
                 vec![
-                    message::response_status::set(if data.error.is_some() { 3 } else { 2 }),
-                    message::text::set(data.error.clone().unwrap_or("".to_string())),
+                    message::text::set(
+                        response
+                            .clone()
+                            .unwrap_or(data.response_error.clone().unwrap_or("".to_string())),
+                    ),
+                    message::response_status::set(if data.response_error.is_some() {
+                        3
+                    } else {
+                        2
+                    }),
                     message::date_finalized::set(chrono::Utc::now().into()),
                 ],
             )
@@ -202,7 +215,11 @@ impl TaskExec for ReplyTask {
                 message::id::equals(u2b(data.message_id)),
                 // db_space::id::equals(u2b(space.id)),
                 vec![
-                    message::response_status::set(if data.error.is_some() { 3 } else { 2 }),
+                    message::response_status::set(if data.response_error.is_some() {
+                        3
+                    } else {
+                        2
+                    }),
                     message::date_finalized::set(chrono::Utc::now().into()),
                 ],
             )
