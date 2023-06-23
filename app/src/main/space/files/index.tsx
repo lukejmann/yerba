@@ -89,14 +89,14 @@ export default () => {
 	// TODO: move out of here
 	useSpaceSubscription(['files.updates'], {
 		onStarted: () => {
-			console.log('tasks.updates init');
+			console.log('files.updates init');
 		},
 		onError: (err) => {
-			console.error('tasks.updates error', err);
+			console.error('files.updateserror', err);
 		},
 		onData: (updatedFiles) => {
 			// replace the task in the map
-			console.log('tasks.updates data', updatedFiles);
+			console.log('files.updates data', updatedFiles);
 			queryClient.setQueryData(['files.list'], (lastFiles: FileWithTasks[] | undefined) => {
 				if (!lastFiles) return undefined;
 				const newFiles = lastFiles.map((file) => {

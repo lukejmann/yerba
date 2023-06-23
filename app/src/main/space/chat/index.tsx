@@ -7,7 +7,7 @@ import { useSpacesContext } from '~/main/user/SpacesProvider';
 import {
 	FileWrapped,
 	Message,
-	MessageWithTasks,
+	MessageWithTasksAndPeer,
 	useAuth,
 	useRspcSpaceContext,
 	useSpaceMutation,
@@ -109,7 +109,7 @@ export default () => {
 		[messagesQuery.data]
 	);
 
-	const [subMessages, setSubMessages] = useState<MessageWithTasks[]>([]);
+	const [subMessages, setSubMessages] = useState<MessageWithTasksAndPeer[]>([]);
 
 	useSpaceSubscription(['messages.updates'], {
 		onStarted: () => {
@@ -118,18 +118,18 @@ export default () => {
 		onError: (err) => {
 			console.error('messages.updates error', err);
 		},
-		onData: (newOrUpdatesMessages: MessageWithTasks[]) => {
+		onData: (newOrUpdatesMessages: MessageWithTasksAndPeer[]) => {
 			setSubMessages(newOrUpdatesMessages);
 		}
 	});
 
-	const [outboxMesages, setOutboxMessages] = useState<MessageWithTasks[]>([]);
+	const [outboxMesages, setOutboxMessages] = useState<Message[]>([]);
 
 	const [sendError, setSendError] = useState<string | null>(null);
 	const sendMessage = useSpaceMutation(['messages.send'], {
-		onSuccess: () => {
+		onSuccess: (msg) => {
 			setSendError(null);
-			setOutboxMessages([]);
+			setOutboxMessages([...outboxMesages, msg]);
 		},
 		onError: (err) => {
 			setSendError(err.message);
@@ -137,14 +137,25 @@ export default () => {
 	});
 
 	const messages = useMemo(() => {
-		const mapById = new Map<string, MessageWithTasks[]>();
-		const all = [...queryMessages, ...subMessages, ...outboxMesages];
+		const mapById = new Map<string, Message[]>();
+		const subMessagesExp = subMessages
+			.map((m) => {
+				const ms = [m as Message];
+				const responseMsg = m.response_message;
+				if (responseMsg) ms.push(responseMsg);
+				const userMsg = m.user_message;
+				if (userMsg) ms.push(userMsg);
+				return ms;
+			})
+			.flat();
+
+		const all = [...queryMessages, ...subMessagesExp, ...outboxMesages];
 		all.forEach((m) => {
 			const messages = mapById.get(m.id_str) ?? [];
 			mapById.set(m.id_str, [...messages, m]);
 		});
 		// TODO decide how to filter
-		return ([...mapById.values()].map((ms) => ms[0]) as MessageWithTasks[]).sort(
+		return ([...mapById.values()].map((ms) => ms[0]) as Message[]).sort(
 			(a, b) => new Date(a.date_created).getTime() - new Date(b.date_created).getTime()
 		);
 	}, [queryMessages, subMessages, outboxMesages]);
@@ -166,7 +177,7 @@ export default () => {
 				</RowBetween>
 			}
 			scrollContent={messages.map((message, index) => {
-				const align = message.user_message ? 'right' : 'left';
+				const align = message.is_user_message ? 'right' : 'left';
 				return (
 					<ChatMessageRow align={align} key={index}>
 						<ChatMessageContainer align={align} key={index}>

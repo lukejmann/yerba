@@ -15,18 +15,18 @@ pub type Router = rspc::Router<Ctx>;
 
 file::include!(file_with_tasks { tasks : select { id id_str task_type status } });
 task::include!(task_with_file { file });
-message::include!(message_with_tasks { tasks : select { id id_str task_type status } });
+message::include!(message_with_tasks_and_peer { tasks user_message response_message });
 
 #[derive(Debug, Clone, Serialize, Type)]
 pub enum CoreEvent {
     TaskUpdate {
-        tasks: Vec<task_with_file::Data>,
+        tasks: Vec<task::Data>,
     },
     FileUpdate {
         files: Vec<file_with_tasks::Data>,
     },
     MessageUpdate {
-        messages: Vec<message_with_tasks::Data>,
+        messages: Vec<message_with_tasks_and_peer::Data>,
     },
     InvalidateOperation(InvalidateOperationEvent),
 }

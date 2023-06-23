@@ -1,5 +1,5 @@
 use crate::{
-    api::{file_with_tasks, task_with_file, CoreEvent},
+    api::{file_with_tasks, message_with_tasks_and_peer, task_with_file, CoreEvent},
     space::Space,
     utils::{u2b, u2s},
 };
@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 
-use custom_prisma::prisma::{file, space as db_space, task};
+use custom_prisma::prisma::{file, message, space as db_space, task};
 use serde::{de::DeserializeOwned, Serialize};
 
 use tracing::debug;
@@ -21,6 +21,7 @@ use self::dispatcher::Dispatcher;
 
 pub mod dispatcher;
 pub mod learn_file;
+pub mod reply;
 pub mod upload_file;
 
 pub trait TaskInfo: Serialize + DeserializeOwned + Send + Sync + Hash {
@@ -209,25 +210,40 @@ impl<T: TaskExec> DTask for Task<T> {
             .db
             .task()
             .find_unique(task::id::equals(u2b(self.id)))
-            .include(task_with_file::include())
             .exec()
             .await
             .with_context(|| "Failed to find task")?
             .context("Failed to find task")?;
 
-        if let Some(file) = task_data.clone().file {
+        if let Some(file_id) = task_data.clone().file_id {
             let file_with_tasks = space
                 .db
                 .file()
-                .find_unique(file::id::equals(file.id))
+                .find_unique(file::id::equals(file_id))
                 .include(file_with_tasks::include())
                 .exec()
                 .await
-                .with_context(|| "Failed to find file")?
-                .context("Failed to find file")?;
+                .with_context(|| "Failed to find file associated with task")?
+                .context("Failed to find file associated with task")?;
 
             space.emit(CoreEvent::FileUpdate {
                 files: vec![file_with_tasks],
+            });
+        }
+
+        if let Some(message_id) = task_data.clone().message_id {
+            let msg_with_tasks = space
+                .db
+                .message()
+                .find_unique(message::id::equals(message_id))
+                .include(message_with_tasks_and_peer::include())
+                .exec()
+                .await
+                .with_context(|| "Failed to find message associated with task")?
+                .context("Failed to find message associated with task")?;
+
+            space.emit(CoreEvent::MessageUpdate {
+                messages: vec![msg_with_tasks],
             });
         }
 
@@ -248,25 +264,40 @@ impl<T: TaskExec> DTask for Task<T> {
             .db
             .task()
             .find_unique(task::id::equals(u2b(self.id)))
-            .include(task_with_file::include())
             .exec()
             .await
             .with_context(|| "Failed to find task")?
             .context("Failed to find task")?;
 
-        if let Some(file) = task_data.clone().file {
+        if let Some(file_id) = task_data.clone().file_id {
             let file_with_tasks = space
                 .db
                 .file()
-                .find_unique(file::id::equals(file.id))
+                .find_unique(file::id::equals(file_id))
                 .include(file_with_tasks::include())
                 .exec()
                 .await
-                .with_context(|| "Failed to find file")?
-                .context("Failed to find file")?;
+                .with_context(|| "Failed to find file associated with task")?
+                .context("Failed to find file associated with task")?;
 
             space.emit(CoreEvent::FileUpdate {
                 files: vec![file_with_tasks],
+            });
+        }
+
+        if let Some(message_id) = task_data.clone().message_id {
+            let msg_with_tasks = space
+                .db
+                .message()
+                .find_unique(message::id::equals(message_id))
+                .include(message_with_tasks_and_peer::include())
+                .exec()
+                .await
+                .with_context(|| "Failed to find message associated with task")?
+                .context("Failed to find message associated with task")?;
+
+            space.emit(CoreEvent::MessageUpdate {
+                messages: vec![msg_with_tasks],
             });
         }
 
@@ -292,7 +323,6 @@ impl<T: TaskExec> DTask for Task<T> {
                 task::id::equals(u2b(self.id)),
                 vec![task::status::set(task_status)],
             )
-            .include(task_with_file::include())
             .exec()
             .await
             .with_context(|| {
@@ -302,23 +332,38 @@ impl<T: TaskExec> DTask for Task<T> {
                 )
             })?;
 
-        if let Some(file) = task_data.clone().file {
+        if let Some(file_id) = task_data.clone().file_id {
             let file_with_tasks = space
                 .db
                 .file()
-                .find_unique(file::id::equals(file.id))
+                .find_unique(file::id::equals(file_id))
                 .include(file_with_tasks::include())
                 .exec()
                 .await
-                .with_context(|| "Failed to find file")?
-                .context("Failed to find file")?;
-
-            debug!("Finished task {} – sending update", self.id);
+                .with_context(|| "Failed to find file associated with task")?
+                .context("Failed to find file associated with task")?;
 
             space.emit(CoreEvent::FileUpdate {
                 files: vec![file_with_tasks],
             });
         }
+
+        if let Some(message_id) = task_data.clone().message_id {
+            let msg_with_tasks = space
+                .db
+                .message()
+                .find_unique(message::id::equals(message_id))
+                .include(message_with_tasks_and_peer::include())
+                .exec()
+                .await
+                .with_context(|| "Failed to find message associated with task")?
+                .context("Failed to find message associated with task")?;
+
+            space.emit(CoreEvent::MessageUpdate {
+                messages: vec![msg_with_tasks],
+            });
+        }
+
         space.emit(CoreEvent::TaskUpdate {
             tasks: vec![task_data],
         });

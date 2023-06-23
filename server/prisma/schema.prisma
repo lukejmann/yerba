@@ -120,13 +120,27 @@ model Message {
 
     text String
 
-    user_message Boolean @default(true)
+    is_user_message Boolean @default(true)
+
+    //response_status only used if not user_message
+    response_status Int @default(0) // 0 = n/a, 1 = generating, 2 = success, 3 = failed
+    // response_message_id Bytes?
+    // response_message    Message? @relation("ResponseMessage", fields: [response_message_id], references: [id])
+
+    // user_message_id Bytes?
+    // user_message    Message? @relation("UserMessage", fields: [user_message_id], references: [id])
+    response_message_id Bytes?   @unique
+    response_message    Message? @relation("ResponseMessage", fields: [response_message_id], references: [id])
+    user_message        Message? @relation("ResponseMessage")
 
     date_created   DateTime @default(now())
     date_finalized DateTime @default(now())
     space_id       Bytes
     space          Space    @relation(fields: [space_id], references: [id])
     tasks          Task[]
+    // response_messages Message[] @relation("ResponseMessage")
+    // user_messages     Message[] @relation("UserMessage")
+    // userId         Bytes?
 
     @@map("message")
 }
