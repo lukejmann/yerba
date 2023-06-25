@@ -64,9 +64,9 @@ RUN pnpm app build
 
 # build python server
 # RUN --mount=type=cache,target=/root/.cache/pip pip install /tmp/cog-0.0.1.dev-py3-none-any.whl
-RUN --mount=type=cache,target=/var/cache/apt apt-get update -qq && apt-get install -qqy libpng-dev libjpeg-dev && rm -rf /var/lib/apt/lists/*
-COPY server/python/requirements.txt /tmp/requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip pip install -r /tmp/requirements.txt
+# RUN --mount=type=cache,target=/var/cache/apt apt-get update -qq && apt-get install -qqy libpng-dev libjpeg-dev && rm -rf /var/lib/apt/lists/*
+# COPY server/python/requirements.txt /tmp/requirements.txt
+# RUN --mount=type=cache,target=/root/.cache/pip pip install -r /tmp/requirements.txt
 
 # WORKDIR /src
 # EXPOSE 5000
@@ -81,22 +81,41 @@ RUN cargo build -p server
 
 #--
 
+
+FROM base as builder
+
+ENV PIP_DEFAULT_TIMEOUT=100 \
+	PIP_DISABLE_PIP_VERSION_CHECK=1 \
+	PIP_NO_CACHE_DIR=1 \
+	POETRY_VERSION=1.3.1
+
+RUN pip install "poetry==1.5.1"
+
+COPY server/p-server .
+
+
+RUN poetry config virtualenvs.in-project true && \
+	poetry install --only=main --no-root && \
+	poetry build
+
+#--
+
 FROM base
 
+COPY --from=builder /.venv ./.venv
+COPY --from=builder /dist /dist
 
 COPY --from=build /serve/target/debug/server /usr/bin/
-# COPY --from=build /serve/server/python/server.py /usr/bin/
 COPY --chmod=755 server/docker/entrypoint.sh /usr/bin/
-COPY --chmod=755 server/python/server.py /usr/bin/
-# COPY --from=build /serve/server/docker/entrypoint.sh /usr/bin/
 
 EXPOSE 8080
-EXPOSE 5001
+
+RUN ./.venv/bin/pip install dist/*.whl
+
 
 VOLUME [ "/data" ]
 
-# RUN chmod 755 entrypoint.sh
-ENTRYPOINT [ "entrypoint.sh" ]
+ENTRYPOINT [ "server" ]
 
 LABEL org.opencontainers.image.title="yerba server" \
 	org.opencontainers.image.source="https://github.com/lukejmann/yerba"

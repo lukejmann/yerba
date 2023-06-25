@@ -154,14 +154,6 @@ impl TaskExec for ReplyTask {
         let space_path = space_base_path.join(space.id.to_string());
         let vector_db_path = space_path.join("vector_db");
 
-        // now we need to get the chat history – the last 10 messages from the space (with response_status of 3) formatted as
-        // # [
-        //     #   {
-        //     #     "HUMAN": "foo",
-        //     #     "AI": "bar"
-        //     #   },
-        //     # ]
-
         let mut chat_history = space
             .db
             .message()

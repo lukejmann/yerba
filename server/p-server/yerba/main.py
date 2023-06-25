@@ -1,7 +1,6 @@
 import os
 import glob
 import time
-from dotenv import load_dotenv
 from typing import List, Optional
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -111,9 +110,7 @@ LOADER_MAPPING = {
 }
 
 
-load_dotenv("../.env")
-
-open_ai_api_key = "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"
+OPEN_AI_API_KEY = os.environ.get("OPEN_AI_API_KEY")
 
 chunk_size = 500
 chunk_overlap = 50
@@ -168,7 +165,7 @@ async def ask(request: AskRequest):
         chat_history = [(x["HUMAN"], x["AI"]) for x in history]
         print(f"chat_history: {chat_history}")
 
-        openai_embeddings = OpenAIEmbeddings(openai_api_key=open_ai_api_key)
+        openai_embeddings = OpenAIEmbeddings(openai_api_key=OPEN_AI_API_KEY)
 
         chroma_settings = Settings(
             chroma_db_impl="duckdb+parquet",
@@ -182,7 +179,7 @@ async def ask(request: AskRequest):
         )
         retriever = db.as_retriever(search_kwargs={"k": 6})
 
-        llm = ChatOpenAI(openai_api_key=open_ai_api_key)
+        llm = ChatOpenAI(openai_api_key=OPEN_AI_API_KEY)
 
         qa = ConversationalRetrievalChain.from_llm(llm, retriever)
 
@@ -207,7 +204,7 @@ async def learn(request: LearnRequest):
     try:
         source_paths = [request.file_path]
         persist_directory = request.vector_db_path
-        openai_embeddings = OpenAIEmbeddings(openai_api_key=open_ai_api_key)
+        openai_embeddings = OpenAIEmbeddings(openai_api_key=OPEN_AI_API_KEY)
 
         chroma_settings = Settings(
             chroma_db_impl="duckdb+parquet",
@@ -215,7 +212,10 @@ async def learn(request: LearnRequest):
             anonymized_telemetry=False,
         )
 
+        print(f"persist_directory: {persist_directory}")
+
         if does_vectorstore_exist(persist_directory):
+            print("vectorstore exists")
             db = Chroma(
                 persist_directory=persist_directory,
                 embedding_function=openai_embeddings,
@@ -228,6 +228,7 @@ async def learn(request: LearnRequest):
             )
             db.add_documents(texts)
         else:
+            print("vectorstore does not exist")
             texts = process_documents(source_paths)
             db = Chroma.from_documents(
                 texts,
@@ -237,6 +238,7 @@ async def learn(request: LearnRequest):
             )
         db.persist()
         db = None
+        print("done")
 
         return LearnResponse(success=True)
     except Exception as e:

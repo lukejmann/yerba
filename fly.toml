@@ -26,7 +26,7 @@ destination = "/data"
 
 [processes]
 server = "server"
-python = "python server.py"
+python = "python -m yerba.main"
 
 # [[services]]
 # http_checks = []

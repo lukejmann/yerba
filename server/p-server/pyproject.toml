@@ -86,4 +86,4 @@ responses = "^0.23.1"
 ruff = "^0.0.274"
 
 [tool.poetry.scripts]
-my-script = "server/server:main"
+my-script = "main:app"

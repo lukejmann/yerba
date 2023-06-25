@@ -14,4 +14,4 @@ mock/
 
 crates/prisma/src/prisma.rs
 app/stats.html
-__pycache__/*
+server/p-server/yerba/__pycache__
