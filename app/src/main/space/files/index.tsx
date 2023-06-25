@@ -248,7 +248,7 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 			</RowFlat>
 			<FileStatusIndicatorRow status={status} />
 			<RowBetween>
-				{status === FileStatus.Uploaded && isDev && (
+				{status === FileStatus.Uploaded && (
 					<SectionButton
 						text="Learn"
 						onClick={() => {

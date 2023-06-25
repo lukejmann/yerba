@@ -1,6 +1,7 @@
 use crate::get_spaces_dir;
 use crate::utils::u2b;
 use crate::{api::CoreEvent, invalidate_query, space::Space};
+use std::env;
 use std::hash::{Hash, Hasher};
 use std::vec;
 
@@ -23,8 +24,6 @@ use uuid::Uuid;
 use super::{TaskExec, TaskInfo, TaskState};
 
 pub struct LearnFileTask {}
-
-pub(crate) const LEARN_URL: &str = "http://localhost:5001/learn";
 
 #[derive(Serialize, Deserialize, Clone, Type)]
 pub struct LearnFileTaskInfo {
@@ -132,9 +131,11 @@ impl TaskExec for LearnFileTask {
 
         debug!("Sending learn request: {:?}", learn_request);
 
+        let endpoint = env::var("PYTHON_ENDPOINT")? + "/learn";
+
         let client = Client::new();
         let res = client
-            .post(LEARN_URL)
+            .post(&endpoint)
             .json(&learn_request)
             .send()
             .await

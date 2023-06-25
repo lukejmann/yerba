@@ -2,6 +2,7 @@ use crate::api::message_with_tasks_and_peer;
 use crate::get_spaces_dir;
 use crate::utils::{u2b, u2s};
 use crate::{api::CoreEvent, invalidate_query, space::Space};
+use std::env;
 use std::hash::{Hash, Hasher};
 use std::vec;
 
@@ -63,7 +64,6 @@ impl Hash for ReplyTaskInfo {
 impl TaskInfo for ReplyTaskInfo {
     type Task = ReplyTask;
 }
-pub(crate) const ASK_URL: &str = "http://localhost:5001/ask";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ReplyTaskState {
@@ -201,9 +201,11 @@ impl TaskExec for ReplyTask {
 
         debug!("Sending ask request: {:?}", ask_request);
 
+        let endpoint = env::var("PYTHON_ENDPOINT")? + "/ask";
+
         let client = Client::new();
         let res = client
-            .post(ASK_URL)
+            .post(endpoint)
             .json(&ask_request)
             .send()
             .await

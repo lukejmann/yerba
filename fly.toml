@@ -15,10 +15,10 @@ dockerfile = "server/docker/Dockerfile"
 [env]
 DB_ADDR = "file:/data/sqlite2.db"
 SPACES_DIR = "/data/2/spaces"
-LOG_LEVEL = "info"
 NODE_ENV = "production"
 PORT = "8080"
 VITE_SERVER_BASE = "yerba-dev.fly.dev"
+PYTHON_ENDPOINT = "http://yerba-dev.fly.dev:5001"
 
 [mounts]
 source = "yerbadev"
@@ -47,14 +47,31 @@ type = "requests"
 soft_limit = 200
 hard_limit = 250
 
+# [[services]]
+# processes = ["python"]
+# protocol = "tcp"
+# internal_port = 5001
+# [services.concurrency]
+# type = "requests"
+# hard_limit = 25
+# soft_limit = 20
+# min_machines_running = 1
+
 [[services]]
-processes = ["python"]
+http_checks = []
 internal_port = 5001
+processes = ['python']
+protocol = "tcp"
+script_checks = []
+tcp_checks = []
 [services.concurrency]
-type = "requests"
-hard_limit = 25
-soft_limit = 20
-min_machines_running = 1
+hard_limit = 10
+soft_limit = 5
+type = "connections"
+
+[[services.ports]]
+handlers = []
+port = 5001
 
 
 [experimental]
