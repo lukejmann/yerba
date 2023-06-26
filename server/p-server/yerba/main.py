@@ -181,7 +181,7 @@ async def ask(request: AskRequest):
 
         llm = ChatOpenAI(openai_api_key=OPEN_AI_API_KEY)
 
-        qa = ConversationalRetrievalChain.from_llm(llm, retriever)
+        qa = ConversationalRetrievalChain.from_llm(llm, retriever, verbose=True)
 
         start = time.time()
         result = qa({"question": question, "chat_history": chat_history})
