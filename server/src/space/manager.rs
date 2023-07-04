@@ -170,7 +170,7 @@ impl SpaceManager {
     pub async fn create_demo_for_user(&self, user: User) -> Result<Space> {
         debug!("Creating demo space for user {:?}", user);
         let name = "CS 229".to_string();
-        let description = "Demo space for CS 229".to_string();
+        let description = "Demo space".to_string();
 
         let space = self.create_as_user(user, name, description).await?;
 

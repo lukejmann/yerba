@@ -10,7 +10,7 @@ export type Procedures = {
         { key: "tasks.list", input: SpaceArgs<null>, result: Task[] },
     mutations: 
         { key: "invalidation.test-invalidate-mutation", input: SpaceArgs<null>, result: null } | 
-        { key: "messages.send", input: SpaceArgs<MessageSendArgs>, result: null } | 
+        { key: "messages.send", input: SpaceArgs<MessageSendArgs>, result: MessageWithTasksAndPeer } | 
         { key: "spaces.create", input: UserArgs<CreateSpaceArgs>, result: SpaceWrapped } | 
         { key: "spaces.createFirst", input: UserArgs<null>, result: SpaceWrapped } | 
         { key: "spaces.delete", input: UserArgs<DeleteSpaceArgs>, result: null } | 

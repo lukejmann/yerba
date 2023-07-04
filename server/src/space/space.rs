@@ -44,22 +44,6 @@ pub struct Space {
     pub(super) node_context: NodeContext,
 }
 
-// // create constructor which creates the space and dispatcher
-// impl Space {
-//     pub(crate) async fn new(node_context: NodeContext, space: space::Data) -> Arc<Self> {
-//         let dispatcher = Dispatcher::new(Self);
-
-//         Arc::new(Self {
-//             id: Uuid::from_slice(&space.id).unwrap(),
-//             owner_id: Uuid::from_slice(&space.owner.id).unwrap(),
-//             meta: space.meta,
-//             db: node_context.db.clone(),
-//             dispatcher: dispatcher.clone(),
-//             node_context,
-//         })
-//     }
-// }
-
 impl Debug for Space {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SpaceContext")
@@ -72,7 +56,6 @@ impl Debug for Space {
 }
 
 impl Space {
-    // TODO: update
     pub(crate) fn emit(&self, event: CoreEvent) {
         if let Err(e) = self.node_context.event_bus_tx.send(event) {
             warn!("Error sending event to event bus: {e:?}");
@@ -86,8 +69,10 @@ impl Space {
 }
 
 impl Space {
-    // TODO: update
-    pub async fn receieve_msg_from_user(&self, msg: String) -> Result<()> {
+    pub async fn receieve_msg_from_user(
+        &self,
+        msg: String,
+    ) -> Result<message_with_tasks_and_peer::Data> {
         let latest_messages = self
             .db
             .message()
@@ -99,36 +84,6 @@ impl Space {
             .exec()
             .await?;
 
-        // if there are 10 more messages with msg.user_message == true than msg.user_message == false, we can't create a new message until the system has responded to the user
-        // let mut user_message_count = 0;
-        // let mut system_message_count = 0;
-        // // let oldest:
-        // for message in latest_messages.clone() {
-        //     if message.is_user_message {
-        //         user_message_count += 1;
-        //     } else {
-        //         system_message_count += 1;
-        //     }
-        // }
-
-        // let oldest_message = latest_messages.last();
-        // let statute_of_limitations = chrono::Utc::now()
-        //     .checked_sub_signed(chrono::Duration::minutes(10))
-        //     .context("Failed to subtract time")?;
-
-        // if let Some(oldest_message) = oldest_message {
-        //     if user_message_count - 10 > system_message_count && oldest_message.date_created < statute_of_limitations {
-        //     let diff = statute_of_limitations.timestamp_millis() - oldest_message.date_created.timestamp_millis();
-        //     let diff_minutes = diff / 1000 / 60;
-
-        //     Err(anyhow!(format!(
-        //         "You can't send a message until the system has responded to your last message. Please wait {} minutes and try again. Statute of limitations: {}",
-        //         diff_minutes, statute_of_limitations
-        //     )))?;
-        // }
-        // }
-
-        // otherwise we can create a new message
         let id = Uuid::new_v4();
 
         let message = self
@@ -146,22 +101,21 @@ impl Space {
             .await?;
 
         debug!("Created message {:?}", message);
-        // invalidate_query!(&space, "messages.list");
 
         let reply_task = ReplyTaskInfo {
             message_id: id,
             message_text: message.text.clone(),
         };
-        self.clone()
+        let task_res = self
+            .clone()
             .dispatcher
             .dispatch(&self, reply_task.clone().runnable())
             .await?;
 
-        Ok(())
+        Ok(message)
     }
 }
 
-// used to return to the frontend with uuid context
 #[derive(Serialize, Deserialize, Debug, Type)]
 pub struct SpaceWrapped {
     pub id: Uuid,

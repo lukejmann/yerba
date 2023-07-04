@@ -86,11 +86,6 @@ export default () => {
 		getNextPageParam: (lastPage) => lastPage.cursor ?? undefined
 	});
 
-	useEffect(() => {
-		queryClient.invalidateQueries(['messages.list']);
-		console.log('messages.list reset');
-	}, [currentSpaceId]);
-
 	const queryMessages = useMemo(
 		() => messagesQuery.data?.pages?.flatMap((d) => d.messages) ?? [],
 		[messagesQuery.data]
@@ -123,6 +118,19 @@ export default () => {
 			setSendError(err.message);
 		}
 	});
+
+	useEffect(() => {
+		console.log('queryMessages have been invalidated', queryMessages);
+		if (queryMessages.length > 0) return;
+		setCursor(0);
+		setSubMessages([]);
+		setOutboxMessages([]);
+	}, [queryMessages.length]);
+
+	useEffect(() => {
+		queryClient.invalidateQueries(['messages.list']);
+		// resetMessages();
+	}, [currentSpaceId]);
 
 	const messages = useMemo(() => {
 		const mapById = new Map<string, Message[]>();

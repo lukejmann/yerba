@@ -8,6 +8,7 @@ import {
 	ItemSubtitle,
 	ItemTitle,
 	RowBetween,
+	RowFixed,
 	RowFlat,
 	SectionHeader,
 	opacify
@@ -26,7 +27,7 @@ const FileWrapper = styled.div<{ selected?: boolean }>`
 	margin-right: 8px;
 	align-items: center;
 	padding: 9.85892px 6px 9.85892px 12px;
-	gap: 8.22px;
+	gap: 22.22px;
 	border-radius: 8px;
 	background: ${({ selected, theme }) =>
 		selected ? theme.backgroundFloatingBase : theme.backgroundFloatingNone};
@@ -242,13 +243,21 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 				filesStore.selectedFile = file;
 			}}
 		>
-			<RowFlat style={{ gap: '4px', width: '100%' }}>
+			<RowFixed style={{ gap: '4px', width: '100%' }}>
 				<ItemTitle>{file.name}</ItemTitle>
 				<ItemSubtitle>{file.extension.replace('.', '').toUpperCase()}</ItemSubtitle>
-			</RowFlat>
-			<FileStatusIndicatorRow status={status} />
-			<RowBetween>
-				{status === FileStatus.Uploaded && (
+			</RowFixed>
+			<div
+				style={{
+					gap: '4px',
+					// minWidth: '200px',
+					flexDirection: 'column',
+					display: 'flex',
+					alignItems: 'flex-end'
+				}}
+			>
+				<FileStatusIndicatorRow status={status} />
+				{status === FileStatus.Uploaded ? (
 					<SectionButton
 						text="Learn"
 						onClick={() => {
@@ -256,8 +265,10 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 							console.log('learnFile', file.id.toString());
 						}}
 					></SectionButton>
+				) : (
+					<div></div>
 				)}
-			</RowBetween>
+			</div>
 		</FileWrapper>
 	);
 };
@@ -269,6 +280,8 @@ const FileStatusRow = styled.div`
 	align-items: center;
 	padding: 0px;
 	gap: 8.22px;
+	width: fit-content;
+	/* min */
 `;
 
 const indicatorToColor = (status: FileStatus) => {

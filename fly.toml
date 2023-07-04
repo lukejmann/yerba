@@ -15,7 +15,7 @@ dockerfile = "server/docker/Dockerfile"
 [env]
 DB_ADDR = "file:/data/sqlite3.db"
 SPACES_DIR = "/data/2/spaces"
-DEMO_DIR = "server/demo"
+DEMO_DIR = "server/demo-space"
 NODE_ENV = "production"
 PORT = "8080"
 VITE_SERVER_BASE = "yerba-dev.fly.dev"

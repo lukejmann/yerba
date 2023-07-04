@@ -283,6 +283,11 @@ impl TaskExec for ReplyTask {
             .exec()
             .await?;
 
+        debug!("response: {:?}", response);
+        debug!("invalidating messages.list");
+
+        invalidate_query!(space, "messages.list");
+
         Ok(())
     }
 }
