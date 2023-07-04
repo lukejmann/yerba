@@ -1,8 +1,6 @@
 #![warn(clippy::unwrap_used, clippy::panic)]
 
-use crate::{
-    api::{CoreEvent, Router},
-};
+use crate::api::{CoreEvent, Router};
 
 use axum::body::Bytes;
 use custom_prisma::prisma::{self, PrismaClient};
@@ -21,7 +19,7 @@ use anyhow::{anyhow, Context, Result};
 use tokio::{fs, io::AsyncWriteExt, sync::broadcast};
 use tracing::{info, warn, Level};
 
-use tracing_subscriber::{prelude::*};
+use tracing_subscriber::prelude::*;
 
 pub mod api;
 pub mod custom_uri;
@@ -70,6 +68,17 @@ pub async fn get_spaces_dir() -> PathBuf {
     spaces_dir
 }
 
+pub async fn get_demo_dir() -> Option<PathBuf> {
+    let demo_dir = match env::var("DEMO_DIR") {
+        Ok(path) => Some(Path::new(&path).to_path_buf()),
+        Err(_e) => {
+            warn!("'$DEMO_DIR' is not set ({})", _e);
+            None
+        }
+    };
+    demo_dir
+}
+
 impl Node {
     pub async fn new(spaces_dir: impl AsRef<Path>) -> Result<(Arc<Node>, Arc<Router>)> {
         let spaces_dir = spaces_dir.as_ref();
@@ -88,11 +97,14 @@ impl Node {
         })
         .await?;
 
-        let user_manager = user::UserManager::new(NodeContext {
-            event_bus_tx: event_bus.0.clone(),
-            db: db.clone(),
-            dispatcher: dispatcher.clone(),
-        })
+        let user_manager = user::UserManager::new(
+            NodeContext {
+                event_bus_tx: event_bus.0.clone(),
+                db: db.clone(),
+                dispatcher: dispatcher.clone(),
+            },
+            space_manager.clone(),
+        )
         .await?;
 
         let router = api::mount();
@@ -125,7 +137,7 @@ impl Node {
 
     pub async fn handle_file_upload(
         &self,
-        jwt_token: String,
+        jwt: String,
         space_id: String,
         path: String,
         bytes: &Bytes,
@@ -133,7 +145,7 @@ impl Node {
         let space_id_uuid = Uuid::parse_str(&space_id)?;
         let user = self
             .user_manager
-            .user_from_jwt_token(jwt_token)
+            .user_from_jwt(jwt)
             .await
             .with_context(|| "failed to parse jwt token")?;
 

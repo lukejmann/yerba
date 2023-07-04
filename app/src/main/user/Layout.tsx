@@ -87,18 +87,18 @@ export const Component = () => {
 		rightY: 0,
 		config: { tension: 100, friction: 50, mass: 10 }
 	}));
-	const bind = useDrag(({ active, movement: [x] }) =>
-		api.start({
-			x: active ? x : 0,
-			leftScale: active ? 0.999 : 1,
-			rightScale: active ? 1.001 : 1,
-			rightY: active ? -5 : 0,
-			immediate: (name) => active && name === 'x'
-		})
-	);
+	// const bind = useDrag(({ active, movement: [x] }) =>
+	// 	api.start({
+	// 		x: active ? x : 0,
+	// 		leftScale: active ? 0.999 : 1,
+	// 		rightScale: active ? 1.001 : 1,
+	// 		rightY: active ? -5 : 0,
+	// 		immediate: (name) => active && name === 'x'
+	// 	})
+	// );
 
 	return (
-		<div {...bind()} style={{ width: '100%', height: '100%' }}>
+		<div style={{ width: '100%', height: '100%' }}>
 			<ContentPanelGroup autoSaveId="userLayout" direction="horizontal">
 				<ContentPanel style={{ scale: leftScale }} minSize={10} defaultSize={14}>
 					<SpacesList />

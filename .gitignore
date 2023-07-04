@@ -15,3 +15,6 @@ mock/
 crates/prisma/src/prisma.rs
 app/stats.html
 server/p-server/yerba/__pycache__
+server/python-server/yerba/__pycache__
+demo-copy
+demo-notes

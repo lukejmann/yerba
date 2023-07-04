@@ -1,6 +1,6 @@
 use crate::api::message_with_tasks_and_peer;
 use crate::get_spaces_dir;
-use crate::utils::{u2b, u2s};
+use crate::utils::{python_server_root, u2b, u2s};
 use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::env;
 use std::hash::{Hash, Hasher};
@@ -201,7 +201,7 @@ impl TaskExec for ReplyTask {
 
         debug!("Sending ask request: {:?}", ask_request);
 
-        let endpoint = env::var("PYTHON_ENDPOINT")? + "/ask";
+        let endpoint = python_server_root() + "/ask";
 
         let client = Client::new();
         let res = client

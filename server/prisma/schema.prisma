@@ -101,7 +101,8 @@ model File {
     name      String
     extension String
 
-    supported Boolean @default(true)
+    learned   Boolean @default(false)
+    supported Boolean @default(false)
 
     size Int @default(0)
 

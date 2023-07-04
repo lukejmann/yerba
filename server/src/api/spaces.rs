@@ -1,5 +1,7 @@
-use crate::api::utils::{space, user};
-
+use crate::{
+    api::utils::{space, user},
+    space::SpaceWrapped,
+};
 
 use custom_prisma::prisma::meta::{self, SetParam};
 use rspc::alpha::AlphaRouter;
@@ -29,8 +31,26 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                         .create_as_user(user, args.name, "A new space".to_string())
                         .await?;
 
-                    Ok(new_space)
+                    let wrapped = SpaceWrapped {
+                        id: new_space.id,
+                        meta: new_space.meta,
+                    };
+
+                    Ok(wrapped)
                 })
+        })
+        .procedure("createFirst", {
+            R.with2(user()).mutation(|(ctx, user), _: ()| async move {
+                debug!("Creating demo space");
+                let new_space = ctx.space_manager.create_demo_for_user(user).await?;
+
+                let wrapped = SpaceWrapped {
+                    id: new_space.id,
+                    meta: new_space.meta,
+                };
+
+                Ok(wrapped)
+            })
         })
         .procedure("edit", {
             #[derive(Type, Deserialize)]

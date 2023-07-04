@@ -13,12 +13,13 @@ kill_timeout = "15s"
 dockerfile = "server/docker/Dockerfile"
 
 [env]
-DB_ADDR = "file:/data/sqlite2.db"
+DB_ADDR = "file:/data/sqlite3.db"
 SPACES_DIR = "/data/2/spaces"
+DEMO_DIR = "server/demo"
 NODE_ENV = "production"
 PORT = "8080"
 VITE_SERVER_BASE = "yerba-dev.fly.dev"
-PYTHON_ENDPOINT = "http://yerba-dev.fly.dev:5001"
+PYTHON_SERVER_ROOT = "http://yerba-dev.fly.dev:5001"
 
 [mounts]
 source = "yerbadev"
@@ -27,12 +28,6 @@ destination = "/data"
 [processes]
 server = "server"
 python = "python -m yerba.main"
-
-# [[services]]
-# http_checks = []
-# internal_port = 8080
-# protocol = "tcp"
-# script_checks = []
 
 [http_service]
 processes = ["server"]
@@ -46,16 +41,6 @@ min_machines_running = 1
 type = "requests"
 soft_limit = 200
 hard_limit = 250
-
-# [[services]]
-# processes = ["python"]
-# protocol = "tcp"
-# internal_port = 5001
-# [services.concurrency]
-# type = "requests"
-# hard_limit = 25
-# soft_limit = 20
-# min_machines_running = 1
 
 [[services]]
 http_checks = []

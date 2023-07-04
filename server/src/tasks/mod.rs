@@ -66,17 +66,12 @@ pub trait TaskExec: Send + Sync + Sized {
     ) -> Result<()>;
 }
 
-// enum TaskCommand {
-//     CompletedExternally,
-//     Shutdown,
-// }
-
 #[async_trait::async_trait]
 pub trait DTask: Send + Sync {
     fn id(&self) -> Uuid;
-    // fn parent_id(&self) -> Option<Uuid>;
+
     fn space_id(&self) -> Option<Uuid>;
-    // fn file_id(&self) -> Option<Uuid>;
+
     fn task_type(&self) -> &'static str;
     async fn setup(&mut self, space: &Space, dispatcher: Arc<Dispatcher>) -> Result<()>;
     async fn run(&mut self, space: &Space, dispatcher: Arc<Dispatcher>) -> Result<()>;
@@ -98,8 +93,7 @@ pub struct TaskState<Task: TaskExec> {
 
 pub struct Task<T: TaskExec> {
     id: Uuid,
-    // parent_id: Option<Uuid>,
-    // file_id: Option<Uuid>,
+
     space_id: Option<Uuid>,
     task_info: TaskState<T>,
     task_with_state: T,
@@ -139,8 +133,7 @@ where
         let id = Uuid::new_v4();
         Box::new(Self {
             id,
-            // parent_id: None,
-            // file_id: None,
+
             space_id: None,
             task_info: TaskState { info, data: None },
             task_with_state: TaskExec::new(),
@@ -149,15 +142,12 @@ where
     }
 }
 
+// Dislike all this spagetti code connecting file status with task status. Will be refactored soon to just update file.status
 #[async_trait::async_trait]
 impl<T: TaskExec> DTask for Task<T> {
     fn id(&self) -> Uuid {
         self.id
     }
-
-    // fn parent_id(&self) -> Option<Uuid> {
-    //     self.parent_id
-    // }
 
     fn space_id(&self) -> Option<Uuid> {
         self.space_id
@@ -166,10 +156,6 @@ impl<T: TaskExec> DTask for Task<T> {
     fn task_type(&self) -> &'static str {
         <T as TaskExec>::TYPE
     }
-
-    // fn file_id(&self) -> Option<Uuid> {
-    //     self.file_id
-    // }
 
     fn hash(&self) -> u64 {
         <T::Info as TaskInfo>::hash(&self.task_info.info)

@@ -44,77 +44,8 @@ pub(crate) fn mount() -> AlphaRouter<Ctx> {
                 .mutation(|(ctx, space), args: MessageSendArgs| async move {
                     debug!("Received message send request");
                     // find latest message in db
-                    let latest_messages = space
-                        .db
-                        .message()
-                        .find_many(vec![message::space_id::equals(u2b(space.id))])
-                        .order_by(message::date_created::order(
-                            custom_prisma::prisma::SortOrder::Desc,
-                        ))
-                        .take(100)
-                        .exec()
-                        .await?;
-
-                    // if there are 10 more messages with msg.user_message == true than msg.user_message == false, we can't create a new message until the system has responded to the user
-                    let mut user_message_count = 0;
-                    let mut system_message_count = 0;
-                    // let oldest:
-                    for message in latest_messages.clone() {
-                        if message.is_user_message {
-                            user_message_count += 1;
-                        } else {
-                            system_message_count += 1;
-                        }
-                    }
-
-                    let oldest_message = latest_messages.last();
-                    let statute_of_limitations = chrono::Utc::now()
-                        .checked_sub_signed(chrono::Duration::minutes(10))
-                        .context("Failed to subtract time")?;
-
-                    // if let Some(oldest_message) = oldest_message {
-                    //     if user_message_count - 10 > system_message_count && oldest_message.date_created < statute_of_limitations {
-                    //     let diff = statute_of_limitations.timestamp_millis() - oldest_message.date_created.timestamp_millis();
-                    //     let diff_minutes = diff / 1000 / 60;
-
-                    //     Err(anyhow!(format!(
-                    //         "You can't send a message until the system has responded to your last message. Please wait {} minutes and try again. Statute of limitations: {}",
-                    //         diff_minutes, statute_of_limitations
-                    //     )))?;
-                    // }
-                    // }
-
-                    // otherwise we can create a new message
-                    let id = Uuid::new_v4();
-
-                    let message = space
-                        .db
-                        .message()
-                        .create(
-                            u2b(id),
-                            u2s(id),
-                            args.text,
-                            db_space::id::equals(u2b(space.clone().id)),
-                            vec![],
-                        )
-                        .include(message_with_tasks_and_peer::include())
-                        .exec()
-                        .await?;
-
-                    debug!("Created message {:?}", message);
-                    // invalidate_query!(&space, "messages.list");
-
-                    let reply_task = ReplyTaskInfo {
-                        message_id: id,
-                        message_text: message.text.clone(),
-                    };
-                    let learn_taskId = space
-                        .clone()
-                        .dispatcher
-                        .dispatch(&space, reply_task.clone().runnable())
-                        .await?;
-
-                    Ok(message)
+                    let send_res = space.receieve_msg_from_user(args.text.clone()).await?;
+                    Ok(send_res)
                 })
         })
         .procedure("list", {

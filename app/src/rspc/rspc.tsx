@@ -96,16 +96,16 @@ const spaceClient = rspc2.dangerouslyHookIntoInternals<SpaceProceduresDef>({
 			console.error('Attempted to do space operation with no user set!');
 			return [
 				keyAndInput[0],
-				{ jwt_token: 'null_jwt', space_id: FAKE_UUID, arg: keyAndInput[1] ?? null }
+				{ jwt: 'null_jwt', space_id: FAKE_UUID, arg: keyAndInput[1] ?? null }
 			];
 		}
 
 		const spaceId = currentSpaceCache.id;
 		if (spaceId === null) {
 			console.error('Attempted to do space operation with no space set!');
-			return [keyAndInput[0], { jwt_token: jwt, space_id: FAKE_UUID, arg: keyAndInput[1] ?? null }];
+			return [keyAndInput[0], { jwt: jwt, space_id: FAKE_UUID, arg: keyAndInput[1] ?? null }];
 		}
-		return [keyAndInput[0], { jwt_token: jwt, space_id: spaceId, arg: keyAndInput[1] ?? null }];
+		return [keyAndInput[0], { jwt: jwt, space_id: spaceId, arg: keyAndInput[1] ?? null }];
 	}
 });
 // @ts-expect-error
@@ -118,9 +118,9 @@ const userClient = rspc3.dangerouslyHookIntoInternals<UserProceduresDef>({
 		const jwt = authStore.jwt;
 		if (!jwt) {
 			console.error('Attempted to do user operation with no user set!');
-			return [keyAndInput[0], { jwt_token: 'null_jwt', arg: keyAndInput[1] ?? null }];
+			return [keyAndInput[0], { jwt: 'null_jwt', arg: keyAndInput[1] ?? null }];
 		}
-		return [keyAndInput[0], { jwt_token: jwt, arg: keyAndInput[1] ?? null }];
+		return [keyAndInput[0], { jwt: jwt, arg: keyAndInput[1] ?? null }];
 	}
 });
 

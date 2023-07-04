@@ -10,8 +10,9 @@ export type Procedures = {
         { key: "tasks.list", input: SpaceArgs<null>, result: Task[] },
     mutations: 
         { key: "invalidation.test-invalidate-mutation", input: SpaceArgs<null>, result: null } | 
-        { key: "messages.send", input: SpaceArgs<MessageSendArgs>, result: MessageWithTasksAndPeer } | 
+        { key: "messages.send", input: SpaceArgs<MessageSendArgs>, result: null } | 
         { key: "spaces.create", input: UserArgs<CreateSpaceArgs>, result: SpaceWrapped } | 
+        { key: "spaces.createFirst", input: UserArgs<null>, result: SpaceWrapped } | 
         { key: "spaces.delete", input: UserArgs<DeleteSpaceArgs>, result: null } | 
         { key: "spaces.edit", input: SpaceArgs<EditSpaceArgs>, result: Meta } | 
         { key: "tasks.learnFile", input: SpaceArgs<LearnFileTaskInfo>, result: null } | 
@@ -32,7 +33,7 @@ export type EditSpaceArgs = { name: string | null; description: string | null }
 
 export type FileUploadTaskInfo = { path: string }
 
-export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; supported: boolean; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: Task[] }
+export type FileWithTasks = { id: number[]; id_str: string; path: string; name: string; extension: string; learned: boolean; supported: boolean; size: number; date_created: string; date_modified: string; date_indexed: string; space_id: number[]; tasks: Task[] }
 
 export type InvalidateOperationEvent = { key: string; arg: any; result: any | null }
 
@@ -53,7 +54,7 @@ export type Meta = { id: number[]; id_str: string; name: string; description: st
 /**
  * Can wrap a query argument to require it to contain a `space_id` and provide helpers for working with spaces.
  */
-export type SpaceArgs<T> = { jwt_token: string; space_id: string; arg: T }
+export type SpaceArgs<T> = { jwt: string; space_id: string; arg: T }
 
 export type SpaceWrapped = { id: string; meta: Meta }
 
@@ -64,6 +65,6 @@ export type User = { id: number[]; id_str: string; account_attached: boolean }
 /**
  * Can wrap a query argument to require it to contain a `user_id` and provide helpers for working with users.
  */
-export type UserArgs<T> = { jwt_token: string; arg: T }
+export type UserArgs<T> = { jwt: string; arg: T }
 
 export type UserWithToken = { user: User; token: string }

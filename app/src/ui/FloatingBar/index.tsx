@@ -11,20 +11,16 @@ const FloatingBarContainer = styled(animated.div)<{ align: 'top' | 'bottom' }>`
 	gap: 0px;
 
 	position: absolute;
-	// width: calc(100%);
-	// height: fit-content;
+
 	left: 0px;
 	right: 0px;
 	${({ align }) => `${align}: 0px;`}
-	// background: ${({ align }) => (align === 'top' ? 'yellow' : 'orange')};
 
 	z-index: ${({ align }) => (align === 'top' ? '101' : '100')};
 
 	padding: 12px 8px;
 
 	border-radius: 8px;
-
-	// max-height: 100px;
 `;
 
 interface FloatingBarProps {
@@ -40,14 +36,13 @@ export const FloatingBar = React.forwardRef<HTMLDivElement, FloatingBarProps>(fu
 ) {
 	const theme = useTheme();
 	const styles = useSpring({
-		// border: float ? '1px solid #e6e6e6' : '1px solid #e6e6e600',
 		boxShadow:
 			align == 'bottom'
 				? '0px 2px 3px -1px rgba(0, 0, 0, 0.0'
 				: float
 				? '0px 10px 30px -5px rgba(0, 0, 0, 0.1)'
 				: '0px 10px 30px -5px rgba(0, 0, 0, 0.01)',
-		// backdropFilter: float ? 'blur(7px)' : 'blur(0.1px)',
+
 		backgroundColor:
 			align == 'bottom'
 				? theme?.backgroundFloatingBase
@@ -77,12 +72,11 @@ const FloatingBarScrollContainer = styled(animated.div)`
 	align-items: center;
 	gap: 0px;
 	overflow: visible;
-	// margin: 10px;
 `;
 
 const FloatingBarScrollContent = styled(animated.div)`
 	position: absolute;
-	// height: 100%;
+
 	top: 0;
 	left: 0;
 	right: 0;
@@ -142,7 +136,6 @@ export default function FloatingBarWithContent({
 	const scrollContainerRef = scrollRef || scrollContainerRefDefault;
 	const [topFloatRef, { height: topHeight }] = useMeasure();
 	const [bottomFloatRef, { height: bottomHeight }] = useMeasure();
-	console.log('bottomHeight', bottomHeight);
 	const [topItemRef, topItemInView] = useInView({
 		root: scrollContainerRef,
 		rootMargin: '-10px 0px 10px 0px'
@@ -160,38 +153,17 @@ export default function FloatingBarWithContent({
 			!bottomItemInView || !topItemInView
 				? '0 0 0 1pt rgba(230, 230, 230, 0.2)'
 				: '0 0 0 1pt rgba(230, 230, 230, 0.02)'
-		// outlineOffset: '-16px',
-		// outlineRadius: '8px'
 	});
 
-	// when topItemInView changes to true, call onReachTop
 	React.useEffect(() => {
 		if (topItemInView) {
 			onReachTop?.();
 		}
 	}, [topItemInView]);
 
-	// scroll to bottom on scroll content change
-	// React.useEffect(() => {
-	// 	if (scrollContainerRef.current) {
-	// 		if (prefer === 'bottom') {
-	// 			scrollContainerRef.current.scrollTo({
-	// 				top: scrollContainerRef.current.scrollHeight,
-	// 				behavior: 'smooth'
-	// 			});
-	// 		} else {
-	// 			scrollContainerRef.current.scrollTo({
-	// 				top: 0,
-	// 				behavior: 'smooth'
-	// 			});
-	// 		}
-	// 	}
-	// }, [scrollContent]);
-
 	return (
 		<FloatingBarTotalWrapper
 			style={{
-				// padding: '8px'
 				...wrapperStyles
 			}}
 		>

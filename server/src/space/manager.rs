@@ -1,18 +1,26 @@
 use crate::{
-    get_spaces_dir, invalidate_query,
+    get_demo_dir, get_spaces_dir, invalidate_query,
     space::SpaceWrapped,
-    tasks::dispatcher::Dispatcher,
+    tasks::{dispatcher::Dispatcher, upload_file::SUPPORTED_EXTENSIONS},
     user::User,
     utils::{u2b, u2s},
     NodeContext,
+};
+use tokio::{
+    fs,
+    io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt, BufReader, SeekFrom},
 };
 
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use custom_prisma::prisma::{meta, space, user};
+use custom_prisma::prisma::{
+    file::{self, name},
+    meta, space as db_space, user,
+};
+use fs_extra::dir::CopyOptions;
 
-use tokio::{fs, sync::RwLock};
+use tokio::sync::RwLock;
 use tracing::debug;
 use uuid::Uuid;
 
@@ -31,7 +39,7 @@ impl SpaceManager {
             .db
             .space()
             .find_many(vec![])
-            .include(space::include!({ meta owner}))
+            .include(db_space::include!({ meta owner}))
             .exec()
             .await?;
 
@@ -74,8 +82,8 @@ impl SpaceManager {
             .node_context
             .db
             .space()
-            .find_unique(space::id::equals(id.as_bytes().to_vec()))
-            .include(space::include!({ meta owner}))
+            .find_unique(db_space::id::equals(id.as_bytes().to_vec()))
+            .include(db_space::include!({ meta owner}))
             .exec()
             .await
             .with_context(|| format!("Failed to find space with id {:?}", id))?
@@ -103,7 +111,7 @@ impl SpaceManager {
         user: User,
         name: String,
         description: String,
-    ) -> Result<SpaceWrapped> {
+    ) -> Result<Space> {
         let space_id: Uuid = Uuid::new_v4();
         let meta_id = Uuid::new_v4();
 
@@ -119,7 +127,7 @@ impl SpaceManager {
             .exec()
             .await?;
 
-        let _new_space: space::Data = self
+        let _new_space: db_space::Data = self
             .node_context
             .db
             .space()
@@ -153,10 +161,104 @@ impl SpaceManager {
 
         invalidate_query!(new_space, "spaces.list");
 
-        Ok(SpaceWrapped {
-            id: new_space.id,
-            meta: new_space.meta,
-        })
+        Ok(new_space)
+    }
+
+    // here we create the file by calling create_as_user with name "CS 229" and description "Demo space for CS 229"
+    // then, we copy all files from get_demo_dir() and add them all as files to the space (except for the vector_db directory)
+    // them, we call space.receieve_msg_from_user()
+    pub async fn create_demo_for_user(&self, user: User) -> Result<Space> {
+        debug!("Creating demo space for user {:?}", user);
+        let name = "CS 229".to_string();
+        let description = "Demo space for CS 229".to_string();
+
+        let space = self.create_as_user(user, name, description).await?;
+
+        let demo_dir = get_demo_dir().await;
+        // return if demo_dir doesn't exist
+        if !demo_dir.is_some() {
+            return Ok(space);
+        }
+        let demo_dir = demo_dir.unwrap();
+
+        let space_base_path = get_spaces_dir().await;
+        let space_path = space_base_path.join(space.id.to_string());
+
+        let mut read_dir = fs::read_dir(demo_dir.clone()).await?;
+        while let Some(entry) = read_dir.next_entry().await? {
+            let path = entry.path();
+            let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
+
+            if file_name != "vector_db" {
+                let demo_file = fs::File::open(path.clone()).await?;
+                let mut demo_file = BufReader::new(demo_file);
+                let mut demo_file_contents = vec![];
+                demo_file.read_to_end(&mut demo_file_contents).await?;
+
+                let new_file_id = Uuid::new_v4();
+                let new_file_path = space_path.join(file_name.clone());
+                debug!("Creating file {:?}", new_file_path.clone());
+
+                // let mut name = info.path.split('/').last().unwrap();
+                let extension = file_name.split('.').last().unwrap();
+                let name = file_name.split('.').next().unwrap();
+
+                let mut new_file = fs::File::create(new_file_path.clone()).await?;
+                new_file.write_all(&demo_file_contents).await?;
+
+                // TODO: refactor file.learned. (see tasks/mod.rs)
+                // TODO: redundant code with upload_file/mod.rs
+
+                let supported = SUPPORTED_EXTENSIONS
+                    .iter()
+                    .any(|ext| ext.to_string() == extension);
+
+                let file_data = space
+                    .db
+                    .file()
+                    .create(
+                        u2b(new_file_id),
+                        u2s(new_file_id),
+                        path.to_str().unwrap().to_string(),
+                        name.to_string(),
+                        extension.to_string(),
+                        db_space::id::equals(u2b(space.clone().id)),
+                        vec![file::learned::set(true), file::supported::set(supported)],
+                    )
+                    .exec()
+                    .await?;
+
+                debug!("Created file {:?}", file_data);
+
+                if !new_file_path.exists() {
+                    fs::create_dir_all(new_file_path.as_path()).await?;
+                }
+
+                // files.push(file_data);
+            }
+        }
+
+        // now we copy the vector_db directory (recursively) to the space directory
+        let new_vector_db_path = space_path.join("vector_db");
+        let demo_vector_db_path = demo_dir.join("vector_db");
+        debug!(
+            "Creating vector_db {:?} from {:?}",
+            new_vector_db_path.clone(),
+            demo_vector_db_path.clone()
+        );
+
+        fs_extra::dir::copy(
+            demo_vector_db_path.clone(),
+            space_path.clone(),
+            &fs_extra::dir::CopyOptions::new(),
+        )?;
+
+        space
+            .receieve_msg_from_user("Explain Jensen's inequality step by step".to_string())
+            .await?;
+
+        invalidate_query!(space, "files.list");
+        Ok(space)
     }
 
     pub async fn delete_space(&self, space_id: Uuid) -> Result<()> {
@@ -179,7 +281,7 @@ impl SpaceManager {
             .node_context
             .db
             .space()
-            .delete(space::id::equals(u2b(space_id)))
+            .delete(db_space::id::equals(u2b(space_id)))
             .exec()
             .await
             .with_context(|| format!("Failed to delete space with id {:?}", space_id))?;

@@ -1,5 +1,5 @@
 use crate::get_spaces_dir;
-use crate::utils::u2b;
+use crate::utils::{python_server_root, u2b};
 use crate::{api::CoreEvent, invalidate_query, space::Space};
 use std::env;
 use std::hash::{Hash, Hasher};
@@ -131,7 +131,7 @@ impl TaskExec for LearnFileTask {
 
         debug!("Sending learn request: {:?}", learn_request);
 
-        let endpoint = env::var("PYTHON_ENDPOINT")? + "/learn";
+        let endpoint = python_server_root() + "/learn";
 
         let client = Client::new();
         let res = client
@@ -144,6 +144,17 @@ impl TaskExec for LearnFileTask {
         if !res.status().is_success() {
             bail!("Failed to learn file");
         }
+
+        // set file.learned to true
+        space
+            .db
+            .file()
+            .update(
+                file::id::equals(u2b(task_info.info.file_id)),
+                vec![file::learned::set(true)],
+            )
+            .exec()
+            .await?;
 
         Ok(())
     }

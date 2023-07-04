@@ -56,3 +56,4 @@ pnpm dev
 Be sure to set the following environment variables:
 `SPACES_DIR`: The directory where spaces will be stored.
 `DB_ADDR`: The address of the database to connect to.
+`OPENAI_API_KEY`: Your OpenAI API key.

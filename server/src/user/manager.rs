@@ -1,4 +1,4 @@
-use crate::{utils::u2s, NodeContext};
+use crate::{space::SpaceManager, utils::u2s, NodeContext};
 
 use jsonwebtoken::{Algorithm, TokenData};
 
@@ -11,6 +11,7 @@ use specta::Type;
 use anyhow::{Context, Result};
 use custom_prisma::prisma::user;
 use tokio::sync::RwLock;
+use tokio::task;
 use tracing::debug;
 use uuid::Uuid;
 
@@ -37,11 +38,15 @@ pub struct UserManager {
     /// users holds the list of users which are currently loaded into the node.
     users: RwLock<Vec<User>>,
     node_context: NodeContext,
+    space_manager: Arc<SpaceManager>,
     // db: Arc<PrismaClient>,
 }
 
 impl UserManager {
-    pub(crate) async fn new(node_context: NodeContext) -> Result<Arc<Self>> {
+    pub(crate) async fn new(
+        node_context: NodeContext,
+        space_manager: Arc<SpaceManager>,
+    ) -> Result<Arc<Self>> {
         let mut users = Vec::new();
 
         let all_users = node_context
@@ -65,6 +70,7 @@ impl UserManager {
         let this = Arc::new(Self {
             users: RwLock::new(users),
             node_context,
+            space_manager,
         });
 
         debug!("UserManager initialized");
@@ -72,7 +78,7 @@ impl UserManager {
         Ok(this)
     }
 
-    pub(crate) async fn sync_user_from_db(&self, id: Uuid) -> Result<()> {
+    pub(crate) async fn sync_user_from_db(&self, id: Uuid) -> Result<User> {
         let user = self
             .node_context
             .db
@@ -91,7 +97,7 @@ impl UserManager {
         // if the user already exists, update it
         if let Some(user_existing) = user_existing {
             user_existing.jwts = jwts;
-            return Ok(());
+            return Ok(user_existing.clone());
         }
 
         // otherwise, create a new user
@@ -102,9 +108,9 @@ impl UserManager {
             node_context: self.node_context.clone(),
         };
 
-        users.push(new_user);
+        users.push(new_user.clone());
 
-        Ok(())
+        Ok(new_user)
     }
 
     /// create creates a new user with the given config and mounts it into the running [UserManager].
@@ -139,9 +145,21 @@ impl UserManager {
             .exec()
             .await?;
 
-        self.sync_user_from_db(user_id).await?;
+        let user = self.sync_user_from_db(user_id).await?;
 
         debug!("Created user: {:?}", new_user);
+
+        let space_manager = self.space_manager.clone();
+
+        // this is an async func but we want to run it without awaiting
+        task::spawn(async move {
+            // create_demo_for_user(&user).await?;
+            let res = space_manager.create_demo_for_user(user).await;
+            if let Err(err) = res {
+                tracing::error!("Error creating demo for user: {:?}", err);
+            }
+        });
+        // .await?;
 
         Ok(UserWithToken {
             user: new_user,
@@ -173,7 +191,7 @@ impl UserManager {
             .map(Clone::clone)
     }
 
-    pub async fn user_from_jwt_token(&self, token: String) -> Option<User> {
+    pub async fn user_from_jwt(&self, token: String) -> Option<User> {
         let decoded: Result<TokenData<Claims>, jsonwebtoken::errors::Error> = jsonwebtoken::decode(
             &token,
             &jsonwebtoken::DecodingKey::from_secret(SECRET),

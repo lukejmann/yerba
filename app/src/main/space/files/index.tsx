@@ -51,7 +51,7 @@ enum FileStatus {
 	Learning = 2,
 	Learned = 3,
 	Failed = 4,
-	Unsupported = 5
+	NotSupported = 5
 }
 
 enum TaskStatus {
@@ -217,12 +217,12 @@ const FileRow = ({ file }: { file: FileWithTasks }) => {
 		console.log('learningTasksCompleted', learningTasksCompleted);
 
 		const status =
-			learningTasksCompleted.length > 0
+			file.supported || learningTasksCompleted.length > 0
 				? FileStatus.Learned
 				: learningTasksRunning.length > 0
 				? FileStatus.Learning
 				: !file.supported
-				? FileStatus.Unsupported
+				? FileStatus.NotSupported
 				: uploadingTasksCompleted.length > 0
 				? FileStatus.Uploaded
 				: uploadingTasksRunning.length > 0
@@ -283,7 +283,7 @@ const indicatorToColor = (status: FileStatus) => {
 			return '#0fd804';
 		case FileStatus.Failed:
 			return '#d83904';
-		case FileStatus.Unsupported:
+		case FileStatus.NotSupported:
 			return '#f0f0f0';
 	}
 };

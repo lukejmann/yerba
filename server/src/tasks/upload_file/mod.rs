@@ -33,8 +33,8 @@ impl TaskInfo for FileUploadTaskInfo {
     type Task = FileUploadTask;
 }
 
-const SUPPORTED_EXTENSIONS: [&str; 12] = [
-    "csv", "doc", "docx", "enex", "epub", "html", "md", "odt", "pdf", "ppt", "pptx", "txt",
+pub const SUPPORTED_EXTENSIONS: [&str; 12] = [
+    "csv", "doc", "docx", "epub", "html", "md", "odt", "pdf", "ppt", "pptx", "txt", "json",
 ];
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Latex from 'react-latex-next';
 import styled from 'styled-components/macro';
 import { useSpacesContext } from '~/main/user/SpacesProvider';
 import {
@@ -16,20 +17,20 @@ import SectionButton from '~/ui/buttons';
 
 const ChatWrapper = styled.div<{ selected?: boolean }>`
 	display: flex;
-	// padding: 12px 8px;
+
 	flex-direction: column;
 	border-radius: 9px;
 	justify-content: space-between;
 	align-items: center;
-	// align-self: stretch;
+
 	box-shadow: -33.766px 25.9738px 77.9215px rgba(0, 0, 0, 0.14);
 	background: ${({ theme }) => theme.backgroundFloatingBase};
-	// background: red;
+
 	height: 100%;
 	border-radius: 9px;
 	border: 1px solid var(--a, #e6e6e6);
 	background: rgba(255, 255, 255, 0.01);
-	/* b */
+
 	box-shadow: -39px 30px 90px 0px rgba(0, 0, 0, 0.07);
 	backdrop-filter: blur(7px);
 `;
@@ -51,12 +52,6 @@ const ChatTopBar = styled.div`
 	padding: 12px 8px;
 `;
 
-// const STEP_SIZE = 10;
-// const chatStore = proxy({
-// 	messages: [] as Message[],
-// 	cursor: 0
-// });
-
 export default () => {
 	const { space, spaces, currentSpaceId } = useSpacesContext();
 	const jwt = useAuth();
@@ -70,11 +65,10 @@ export default () => {
 	const queryClient = useQueryClient();
 
 	const messagesQuery = useInfiniteQuery({
-		// enabled: isObjectQuery,
 		queryKey: [
 			'messages.list',
 			{
-				jtw_token: jwt,
+				jwt: jwt,
 				space_id: currentSpaceId,
 				arg: {
 					take: 50
@@ -92,6 +86,11 @@ export default () => {
 		getNextPageParam: (lastPage) => lastPage.cursor ?? undefined
 	});
 
+	useEffect(() => {
+		queryClient.invalidateQueries(['messages.list']);
+		console.log('messages.list reset');
+	}, [currentSpaceId]);
+
 	const queryMessages = useMemo(
 		() => messagesQuery.data?.pages?.flatMap((d) => d.messages) ?? [],
 		[messagesQuery.data]
@@ -101,7 +100,6 @@ export default () => {
 
 	useSpaceSubscription(['messages.updates'], {
 		onStarted: () => {
-			// console
 			console.log('messages.updates init');
 		},
 		onError: (err) => {
@@ -118,7 +116,6 @@ export default () => {
 	const [sendError, setSendError] = useState<string | null>(null);
 	const sendMessage = useSpaceMutation(['messages.send'], {
 		onSuccess: (msg) => {
-			// cons
 			setSendError(null);
 			setOutboxMessages([...outboxMesages, msg]);
 		},
@@ -147,7 +144,7 @@ export default () => {
 			const messages = mapById.get(m.id_str) ?? [];
 			mapById.set(m.id_str, [...messages, m]);
 		});
-		// TODO decide how to filter
+
 		return ([...mapById.values()].map((ms) => ms[0]) as Message[]).sort(
 			(a, b) => new Date(a.date_created).getTime() - new Date(b.date_created).getTime()
 		);
@@ -162,7 +159,6 @@ export default () => {
 		console.log('scrollToEnd', scrollRef.current?.scrollHeight);
 	};
 
-	// reset on space change
 	useEffect(() => {
 		setCursor(0);
 		setSendError(null);
@@ -171,7 +167,6 @@ export default () => {
 	}, [currentSpaceId]);
 
 	return (
-		// <ChatWrapper>
 		<FloatingBarWithContent
 			onReachTop={messagesQuery.fetchNextPage}
 			topBarContent={
@@ -186,7 +181,7 @@ export default () => {
 					<ChatMessageRow align={align} key={message.id_str}>
 						<ChatMessageContainer align={align} key={index}>
 							<ChatMessageText index={index} align={align}>
-								{message.text}
+								<Latex>{message.text}</Latex>
 							</ChatMessageText>
 						</ChatMessageContainer>
 					</ChatMessageRow>
@@ -208,7 +203,6 @@ export default () => {
 			}
 			prefer="bottom"
 		/>
-		// </ChatWrapper>
 	);
 };
 
@@ -216,7 +210,7 @@ const ChatMessageText = styled.div<{ align: 'left' | 'right'; index: number }>`
 	display: flex;
 	flex-direction: column;
 	flex: 1 0 0;
-	// color: #b3b6ca;
+
 	text-shadow: -32.98798751831055px 24.740989685058594px 74.22296905517578px 0px rgba(0, 0, 0, 0.3);
 	font-weight: 600;
 	text-align: ${({ align }) => align};
@@ -258,15 +252,11 @@ const ChatMessageContainer = styled.div<{ align: 'left' | 'right' }>`
 const ChatInputBarContainer = styled.div`
 	display: flex;
 	width: 100%;
-	// padding: 11px 8.577px;
+
 	justify-content: space-between;
 	align-items: flex-end;
-	// border-radius: 8px;
-	// border: 1.072px solid var(--a, #e6e6e6);
+
 	background: none;
-	// background: rgba(255, 255, 255, 0.38);
-	// box-shadow: -39px 30px 90px 0px rgba(0, 0, 0, 0.1);
-	// backdrop-filter: blur(7px);
 `;
 const ChatInputBarInput = styled.input`
 	display: flex;
@@ -298,7 +288,6 @@ const ChatInputBar = ({
 		setMessage('');
 	};
 
-	// on press enter
 	useEffect(() => {
 		const handleEnter = (e: KeyboardEvent) => {
 			if (e.key === 'Enter') {

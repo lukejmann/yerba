@@ -13,6 +13,7 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct User {
     pub id: Uuid,
+
     pub jwts: Vec<String>,
     pub db: Arc<PrismaClient>,
     pub(super) node_context: NodeContext,

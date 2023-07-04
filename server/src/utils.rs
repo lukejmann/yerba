@@ -1,6 +1,8 @@
 use anyhow::{Context, Result};
 use std::sync::Arc;
 
+use std::{env, net::SocketAddr};
+
 use super::Node;
 use custom_prisma::prisma::{self, PrismaClient};
 
@@ -47,4 +49,11 @@ pub async fn load_and_migrate(db_url: &str) -> Result<PrismaClient> {
     })?;
 
     Ok(client)
+}
+
+// pub static   port = env::var("PORT")
+// .map(|port| port.parse::<u16>().unwrap_or(8080));
+
+pub fn python_server_root() -> String {
+    env::var("PYTHON_SERVER_ROOT").unwrap_or("http://localhost:5001".to_string())
 }

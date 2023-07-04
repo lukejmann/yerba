@@ -107,9 +107,9 @@ async fn main() {
                 info!("uploading file – in MultiPart callback");
                 let field = files.next_field().await.unwrap().unwrap();
                 let name = field.name().unwrap().to_string();
-                let datajwt_token = field.bytes().await.unwrap();
-                if name != "jwt_token" {
-                    return "jwt_token not found";
+                let datajwt = field.bytes().await.unwrap();
+                if name != "jwt" {
+                    return "jwt not found";
                 }
 
                 let field = files.next_field().await.unwrap().unwrap();
@@ -119,7 +119,7 @@ async fn main() {
                     return "space_uuid not found";
                 }
 
-                let jwt_token = String::from_utf8(datajwt_token.to_vec()).unwrap();
+                let jwt = String::from_utf8(datajwt.to_vec()).unwrap();
                 let space_uuid = String::from_utf8(dataspace_uuid.to_vec()).unwrap();
 
                 while let Some(field) = files.next_field().await.unwrap_or(None) {
@@ -141,7 +141,7 @@ async fn main() {
 
                     let res = node
                         .handle_file_upload(
-                            jwt_token.clone(),
+                            jwt.clone(),
                             space_uuid.clone(),
                             // upload_uuid,
                             path,

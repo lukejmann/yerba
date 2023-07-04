@@ -65,7 +65,7 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
 
 RUN pip install "poetry==1.5.1"
 
-COPY server/p-server .
+COPY server/python-server .
 
 RUN poetry config virtualenvs.in-project true && \
 	poetry install --only=main --no-root && \
